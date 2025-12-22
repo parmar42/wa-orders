@@ -1,0 +1,17 @@
+{
+  "name": "revolutionary-kds-backend",
+  "version": "1.0.0",
+  "description": "Node.js Backend for KDS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http": "0.0.1-security",
+    "socket.io": "^4.7.2",
+    "mongoose": "^7.5.0",
+    "cors": "^2.8.5",
+    "axios": "^1.5.0"
+  }
+}
