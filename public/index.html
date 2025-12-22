@@ -983,16 +983,11 @@
   </div>
 
   <script>
-    // ⚠️ IMPORTANT: REPLACE THESE VALUES
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGc3g4jdYWAckG-ZXmBzTI0DmYqvBAIyQ4bLnc3DbujzDa62ySmwFy7RMpoqQ-2tYqTg/exec'; // Your Google Apps Script Web App URL
-    const BOTPRESS_WEBHOOK = 'YOUR_BOTPRESS_WEBHOOK_URL'; // e.g., https://webhook.botpress.cloud/YOUR_BOT_ID (Used for proactive message)
-    const WHATSAPP_NUMBER = '12462367556'; // Your restaurant's WhatsApp number (Used for redirect link)
-    
+       
     let orderItems = [];
-    let customerWaNumber = ''; // Variable to hold the WA number from the URL
+    let customerWaNumber = ''; 
     
     // --- 1. URL Parameter Retrieval ---
-    // Function to get the WhatsApp number from the URL
     function getParameterByName(name, url = window.location.href) {
         name = name.replace(/[\[\]]/g, '\\$&');
         const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
@@ -1002,18 +997,16 @@
         return decodeURIComponent(results[2].replace(/\+/g, ' '));
     }
 
-    // Check for the 'wa_number' parameter on page load (assuming Botpress uses 'wa_number')
+    // Capture the WhatsApp number from the URL
     customerWaNumber = getParameterByName('wa_number'); 
     if (customerWaNumber) {
-        // Populate the new hidden field
-        document.getElementById('waNumberFromURL').value = customerWaNumber.replace(/[^0-9]/g, ''); // Clean the number
+        document.getElementById('waNumberFromURL').value = customerWaNumber.replace(/[^0-9]/g, ''); 
         console.log('Customer WA Number from URL:', customerWaNumber);
     } else {
-        console.warn('Customer WA Number parameter (wa_number) not found in URL.');
+        console.warn('Customer WA Number parameter (wa_number) not found.');
     }
-    // ----------------------------------
     
-    // Category toggle (KEEP EXISTING LOGIC)
+    // --- 2. Menu Logic (Toggles, Selection, Quantities) ---
     document.querySelectorAll('.category-header').forEach(header => {
       header.addEventListener('click', function() {
         const targetId = this.getAttribute('data-target');
@@ -1030,10 +1023,8 @@
       });
     });
     
-    // Menu item selection (KEEP EXISTING LOGIC)
     document.querySelectorAll('.menu-item').forEach(item => {
       const checkbox = item.querySelector('.item-checkbox');
-      
       checkbox.addEventListener('change', function() {
         if (this.checked) {
           item.classList.add('selected');
@@ -1045,22 +1036,17 @@
       });
       
       item.addEventListener('click', function(e) {
-        if (e.target.classList.contains('qty-btn') || e.target === checkbox) {
-          return;
-        }
+        if (e.target.classList.contains('qty-btn') || e.target === checkbox) return;
         checkbox.checked = !checkbox.checked;
         checkbox.dispatchEvent(new Event('change'));
       });
     });
     
-    // Quantity controls (KEEP EXISTING LOGIC)
     document.querySelectorAll('.qty-plus').forEach(btn => {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         const display = this.previousElementSibling;
-        let qty = parseInt(display.textContent);
-        qty++;
-        display.textContent = qty;
+        display.textContent = parseInt(display.textContent) + 1;
         updateOrder();
       });
     });
@@ -1071,8 +1057,7 @@
         const display = this.nextElementSibling;
         let qty = parseInt(display.textContent);
         if (qty > 1) {
-          qty--;
-          display.textContent = qty;
+          display.textContent = qty - 1;
           updateOrder();
         }
       });
@@ -1081,7 +1066,6 @@
     document.getElementById('orderType').addEventListener('change', updateOrder);
     
     function updateOrder() {
-      // (KEEP EXISTING LOGIC)
       orderItems = [];
       let subtotal = 0;
       
@@ -1091,13 +1075,7 @@
         const qty = parseInt(item.querySelector('.qty-display').textContent);
         const itemSubtotal = price * qty;
         
-        orderItems.push({
-          name: name,
-          price: price,
-          quantity: qty,
-          subtotal: itemSubtotal
-        });
-        
+        orderItems.push({ name, price, quantity: qty, subtotal: itemSubtotal });
         subtotal += itemSubtotal;
       });
       
@@ -1109,7 +1087,6 @@
       
       if (orderItems.length > 0) {
         summaryDiv.style.display = 'block';
-        
         summaryItems.innerHTML = orderItems.map(item => `
           <div class="summary-item">
             <span>${item.name} × ${item.quantity}</span>
@@ -1117,33 +1094,12 @@
           </div>
         `).join('');
         
-        let total = subtotal;
-        let calculationsHTML = `
-          <div class="summary-subtotal">
-            <span>Subtotal:</span>
-            <span>$${subtotal.toFixed(2)}</span>
-          </div>
+        let total = orderType === 'Delivery' ? subtotal * 1.10 : subtotal;
+        summaryCalculations.innerHTML = `
+          <div class="summary-subtotal"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
+          ${orderType === 'Delivery' ? `<div class="summary-item"><span>Service Charge (10%):</span><span>$${(subtotal * 0.1).toFixed(2)}</span></div>` : ''}
+          <div class="summary-total"><span>TOTAL:</span><span>$${total.toFixed(2)} BBD</span></div>
         `;
-        
-        if (orderType === 'Delivery') {
-          const serviceCharge = subtotal * 0.10;
-          total = subtotal + serviceCharge;
-          calculationsHTML += `
-            <div class="summary-item">
-              <span>Service Charge (10%):</span>
-              <span>$${serviceCharge.toFixed(2)}</span>
-            </div>
-          `;
-        }
-        
-        calculationsHTML += `
-          <div class="summary-total">
-            <span>TOTAL:</span>
-            <span>$${total.toFixed(2)} BBD</span>
-          </div>
-        `;
-        
-        summaryCalculations.innerHTML = calculationsHTML;
         submitBtn.disabled = false;
       } else {
         summaryDiv.style.display = 'none';
@@ -1151,110 +1107,93 @@
       }
     }
     
-    // Success Modal Functions with Botpress Integration (SLIGHTLY MODIFIED)
+    // --- 3. Success Modal & Redirect ---
     function showSuccessModal(orderNumber, orderDetails, totalAmount, customerData) {
       document.getElementById('modalOrderNumber').textContent = orderNumber;
       document.getElementById('successModal').classList.add('show');
       document.body.style.overflow = 'hidden';
       
-      // Auto-redirect after 5 seconds
       let countdown = 5;
       const countdownDisplay = document.getElementById('redirectCountdown');
       
-      if (countdownDisplay) {
-        countdownDisplay.textContent = countdown;
-        
-        const countdownInterval = setInterval(() => {
-          countdown--;
-          countdownDisplay.textContent = countdown;
-          
-          if (countdown <= 0) {
-            clearInterval(countdownInterval);
-            // customerData.phoneNumber now holds the WA number from the URL
-            // sendToBotpressAndRedirect(orderNumber, orderDetails, totalAmount, customerData); 
-            // Note: Since Make.com handles the confirmation message, you can remove the direct Botpress webhook call here.
-            
-            // Redirect immediately to WhatsApp
-            window.location.href = `https://wa.me/${WHATSAPP_NUMBER}`;
-          }
-        }, 1000);
-      }
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdownDisplay) countdownDisplay.textContent = countdown;
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+          window.location.href = `https://wa.me/${WHATSAPP_NUMBER}`;
+        }
+      }, 1000);
     }
-    
-    // Removed sendToBotpressAndRedirect function, as Make.com handles the message.
-    
-    // --- MODIFIED FORM SUBMISSION TO USE doPost (POST METHOD) ---
-document.getElementById('orderForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  if (orderItems.length === 0) {
-    showMessage('Please select at least one item', 'error');
-    return;
-  }
 
-  // Show loading state
-  document.getElementById('loading').style.display = 'block';
-  const submitBtn = document.getElementById('submitBtn');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Submitting...';
-
-  // 1. Prepare Data Object (JSON)
-  const orderData = {
-    customerName: document.getElementById('customerName').value.trim(),
-    phoneNumber: document.getElementById('phoneNumber').value.trim(),
-    waNumberFromURL: document.getElementById('waNumberFromURL').value.trim(), // The Botpress number
-    deliveryAddress: document.getElementById('deliveryAddress').value.trim(),
-    orderType: document.getElementById('orderType').value,
-    items: orderItems, // Sending the array directly is better for the database
-    totalAmount: orderItems.reduce((sum, item) => sum + item.subtotal, 0) * (document.getElementById('orderType').value === 'Delivery' ? 1.10 : 1),
-    specialInstructions: document.getElementById('specialInstructions').value.trim() || 'None',
-    timestamp: new Date()
-  };
-
-  try {
-    // 2. Send POST request to your NEW NODE.JS SERVER
-    const NODE_SERVER_URL = 'https://your-render-app.onrender.com/submit-order';
-    
-    const response = await fetch(NODE_SERVER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData) // Node.js loves JSON
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      document.getElementById('loading').style.display = 'none';
+    // --- 4. NEW NODE.JS FORM SUBMISSION ---
+    document.getElementById('orderForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
       
-      // Keep your existing Success Modal logic
-      const customerData = {
-        customerName: orderData.customerName,
-        phoneNumber: orderData.waNumberFromURL,
-        deliveryAddress: orderData.deliveryAddress,
-        orderType: orderData.orderType
+      if (orderItems.length === 0) {
+        showMessage('Please select at least one item', 'error');
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'block';
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      // Prepare Data for Node.js
+      const itemsSummary = orderItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
+      const subtotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const total = document.getElementById('orderType').value === 'Delivery' ? subtotal * 1.10 : subtotal;
+
+      const orderData = {
+        customerName: document.getElementById('customerName').value.trim(),
+        phoneNumber: document.getElementById('phoneNumber').value.trim(),
+        waNumberFromURL: document.getElementById('waNumberFromURL').value.trim(),
+        deliveryAddress: document.getElementById('deliveryAddress').value.trim(),
+        orderType: document.getElementById('orderType').value,
+        items: itemsSummary,
+        totalAmount: `$${total.toFixed(2)} BBD`,
+        specialInstructions: document.getElementById('specialInstructions').value.trim() || 'None'
       };
 
-      // Format string for modal display
-      const orderDetailsString = orderItems.map(item => `${item.name} x${item.quantity}`).join('\n');
-      
-      showSuccessModal(result.orderNumber || "NEW", orderDetailsString, `$${orderData.totalAmount.toFixed(2)}`, customerData);
+      try {
+        // Use a relative path because menu and server will be on the same Render app
+        const response = await fetch('/submit-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        });
 
-      // Reset form
-      document.getElementById('orderForm').reset();
-      updateOrder();
-    } else {
-      throw new Error('Server returned an error');
-    }
+        const result = await response.json();
 
-  } catch (error) {
-    console.error('Submission Error:', error);
-    document.getElementById('loading').style.display = 'none';
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Order';
-    showMessage('✗ Failed to reach Kitchen. Please try again.', 'error');
-  }
-});
-    // -------------------------------------------------------------
+        if (response.ok) {
+          document.getElementById('loading').style.display = 'none';
+          
+          const customerData = {
+            customerName: orderData.customerName,
+            phoneNumber: orderData.waNumberFromURL,
+            deliveryAddress: orderData.deliveryAddress,
+            orderType: orderData.orderType
+          };
+
+          showSuccessModal(result.orderId ? result.orderId.slice(-4) : "NEW", itemsSummary, orderData.totalAmount, customerData);
+
+          // Reset UI
+          document.getElementById('orderForm').reset();
+          document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+          orderItems = [];
+          updateOrder();
+        } else {
+          throw new Error('Server error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Order';
+        showMessage('✗ Connection Error. Kitchen might be busy. Please try again.', 'error');
+      }
+    });
     
     function showMessage(text, type) {
       const msg = document.getElementById('message');
@@ -1262,9 +1201,8 @@ document.getElementById('orderForm').addEventListener('submit', async function(e
       msg.className = 'message ' + type;
       msg.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      
       setTimeout(() => msg.style.display = 'none', 8000);
     }
-  </script>
+</script>
 </body>
 </html>
