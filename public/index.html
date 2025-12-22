@@ -1127,73 +1127,80 @@
     }
 
     // --- 4. NEW NODE.JS FORM SUBMISSION ---
-    document.getElementById('orderForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
+   // --- MODIFIED FORM SUBMISSION FOR NUMERIC WA-1234 IDS ---
+document.getElementById('orderForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  if (orderItems.length === 0) {
+    showMessage('Please select at least one item', 'error');
+    return;
+  }
+
+  // Show loading state
+  document.getElementById('loading').style.display = 'block';
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+
+  // 1. Prepare Data Object
+  // We send the raw data; the server will generate the WA-1234 number
+  const orderData = {
+    customerName: document.getElementById('customerName').value.trim(),
+    phoneNumber: document.getElementById('phoneNumber').value.trim(),
+    waNumberFromURL: document.getElementById('waNumberFromURL').value.trim(),
+    deliveryAddress: document.getElementById('deliveryAddress').value.trim(),
+    orderType: document.getElementById('orderType').value,
+    items: orderItems.map(item => `${item.quantity}x ${item.name}`).join(', '),
+    totalAmount: (orderItems.reduce((sum, item) => sum + item.subtotal, 0) * (document.getElementById('orderType').value === 'Delivery' ? 1.10 : 1)).toFixed(2),
+    specialInstructions: document.getElementById('specialInstructions').value.trim() || 'None'
+  };
+
+  try {
+    // 2. Send to Node.js Server
+    const response = await fetch('/submit-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData)
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      document.getElementById('loading').style.display = 'none';
       
-      if (orderItems.length === 0) {
-        showMessage('Please select at least one item', 'error');
-        return;
-      }
+      // result.orderNumber will be the "WA-1234" sent back by the server
+      const finalID = result.orderNumber; 
 
-      document.getElementById('loading').style.display = 'block';
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting...';
-
-      // Prepare Data for Node.js
-      const itemsSummary = orderItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
-      const subtotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-      const total = document.getElementById('orderType').value === 'Delivery' ? subtotal * 1.10 : subtotal;
-
-      const orderData = {
-        customerName: document.getElementById('customerName').value.trim(),
-        phoneNumber: document.getElementById('phoneNumber').value.trim(),
-        waNumberFromURL: document.getElementById('waNumberFromURL').value.trim(),
-        deliveryAddress: document.getElementById('deliveryAddress').value.trim(),
-        orderType: document.getElementById('orderType').value,
-        items: itemsSummary,
-        totalAmount: `$${total.toFixed(2)} BBD`,
-        specialInstructions: document.getElementById('specialInstructions').value.trim() || 'None'
+      const customerData = {
+        customerName: orderData.customerName,
+        phoneNumber: orderData.waNumberFromURL,
+        deliveryAddress: orderData.deliveryAddress,
+        orderType: orderData.orderType
       };
 
-      try {
-        // Use a relative path because menu and server will be on the same Render app
-        const response = await fetch('/submit-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData)
-        });
+      // 3. Show Modal with the new ID (e.g., WA-8429)
+      showSuccessModal(finalID, orderData.items, `$${orderData.totalAmount} BBD`, customerData);
 
-        const result = await response.json();
+      // Reset form and UI
+      document.getElementById('orderForm').reset();
+      document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+      orderItems = [];
+      updateOrder();
+      
+      submitBtn.textContent = 'Submit Order';
+      submitBtn.disabled = false;
+    } else {
+      throw new Error('Server Error');
+    }
 
-        if (response.ok) {
-          document.getElementById('loading').style.display = 'none';
-          
-          const customerData = {
-            customerName: orderData.customerName,
-            phoneNumber: orderData.waNumberFromURL,
-            deliveryAddress: orderData.deliveryAddress,
-            orderType: orderData.orderType
-          };
-
-          showSuccessModal(result.orderId ? result.orderId.slice(-4) : "NEW", itemsSummary, orderData.totalAmount, customerData);
-
-          // Reset UI
-          document.getElementById('orderForm').reset();
-          document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-          orderItems = [];
-          updateOrder();
-        } else {
-          throw new Error('Server error');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('loading').style.display = 'none';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Order';
-        showMessage('✗ Connection Error. Kitchen might be busy. Please try again.', 'error');
-      }
-    });
+  } catch (error) {
+    console.error('Submission Error:', error);
+    document.getElementById('loading').style.display = 'none';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Order';
+    showMessage('✗ Connection Error. Please try again.', 'error');
+  }
+});
     
     function showMessage(text, type) {
       const msg = document.getElementById('message');
@@ -1206,3 +1213,4 @@
 </script>
 </body>
 </html>
+
