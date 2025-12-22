@@ -1,0 +1,110 @@
+/* KDS Specific Styling - Dark Mode for Kitchen Visibility */
+:root {
+  --bg-dark: #0f172a;
+  --card-bg: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --wa-green: #22c55e;
+  --web-blue: #3b82f6;
+  --warning-gold: #fbbf24;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 20px;
+}
+
+/* Grid layout for high-volume orders */
+#order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* The Ticket / Card */
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  border-top: 10px solid var(--web-blue); /* Default for Web */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+/* WhatsApp Specific color coding */
+.card.whatsapp {
+  border-top-color: var(--wa-green);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 8px;
+}
+
+.order-id {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.order-type {
+  font-size: 0.75rem;
+  background: #334155;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Item List - High Visibility */
+.items-list {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 15px 0;
+  color: #e2e8f0;
+  white-space: pre-line; /* Keeps line breaks */
+}
+
+.instructions {
+  color: var(--warning-gold);
+  font-size: 0.95rem;
+  font-style: italic;
+  margin-bottom: 15px;
+}
+
+/* Bump Button - Large for easy tapping on tablets */
+.bump-btn {
+  margin-top: auto;
+  width: 100%;
+  padding: 16px;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.bump-btn:hover {
+  background-color: #15803d;
+}
+
+/* Animation for new orders */
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.card {
+  animation: popIn 0.3s ease-out;
+}
