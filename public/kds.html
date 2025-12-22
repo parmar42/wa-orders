@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Display System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #1e293b; margin-bottom: 20px;">
+        <h1 style="margin:0;">KITCHEN ORDERS</h1>
+        <div id="active-count" style="background: #3b82f6; padding: 5px 15px; border-radius: 20px; font-weight: bold;">0 ORDERS ACTIVE</div>
+    </header>
+
+    <div id="order-grid">
+        </div>
+
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <script>
+        // 1. Connect to the Render Server
+        const socket = io();
+        let orders = [];
+        const grid = document.getElementById('order-grid');
+        const notif = document.getElementById('notif-sound');
+
+        // 2. Load existing active orders from Database on startup
+        window.onload = async () => {
+            try {
+                const response = await fetch('/api/orders');
+                orders = await response.json();
+                render();
+            } catch (err) {
+                console.error("Initial load failed:", err);
+            }
+        };
+
+        // 3. Listen for NEW orders (sent from server.js)
+        socket.on("new-order", (order) => {
+            orders.push(order);
+            
+            // Play notification sound
+            notif.play().catch(() => console.log("Sound blocked until user clicks screen"));
+            
+            render();
+        });
+
+        // 4. Draw orders on the screen
+        function render() {
+            grid.innerHTML = '';
+            orders.forEach((o, index) => {
+                const isWA = o.waNumberFromURL && o.waNumberFromURL.length > 0;
+                const card = document.createElement('div');
+                
+                // Add "whatsapp" class for green border if it has a WA number
+                card.className = `card ${isWA ? 'whatsapp' : 'web'}`;
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="order-id">${o.displayId}</span>
+                        <span class="order-type">${o.orderType}</span>
+                    </div>
+                    <div class="items-list">${o.items}</div>
+                    <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 15px;">
+                        <strong>Customer:</strong> ${o.customerName}<br>
+                        <strong>Address:</strong> ${o.deliveryAddress || 'N/A'}<br>
+                        ${o.specialInstructions !== 'None' ? `<div style="margin-top:5px; color:#fbbf24;">📝 ${o.specialInstructions}</div>` : ''}
+                    </div>
+                    <button class="bump-btn" onclick="bump('${o._id}', ${index})">DONE / BUMP</button>
+                `;
+                grid.appendChild(card);
+            });
+            document.getElementById('active-count').innerText = `${orders.length} ORDERS ACTIVE`;
+        }
+
+        // 5. "Bump" (Mark as Done)
+        async function bump(orderId, index) {
+            try {
+                // Update database
+                await fetch(`/api/orders/${orderId}/bump`, { method: 'PATCH' });
+                
+                // Remove from local screen
+                orders.splice(index, 1);
+                render();
+            } catch (err) {
+                console.error("Bump failed:", err);
+            }
+        }
+    </script>
+</body>
+</html>
