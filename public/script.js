@@ -175,15 +175,62 @@ document.getElementById('orderForm').addEventListener('submit', async function(e
             sendToNodeJS(orderData)
         ]);
         document.getElementById('loading').style.display = 'none';
-        showSuccessModal(appsScriptResult.orderNumber || "Order Placed");
+        if (atLeastOneSucceeded && orderNumber) {
+    // 1. Build the WhatsApp Message
+    const whatsappMsg = encodeURIComponent(
+        `*NEW ORDER: #${orderNumber}*\n` +
+        `--------------------------\n` +
+        `*Customer:* ${orderData.customerName}\n` +
+        `*Type:* ${orderData.orderType}\n` +
+        `*Total:* ${orderData.totalAmount}\n\n` +
+        `View full details in the system.`
+    );
+
+    // 2. Open WhatsApp in a new tab
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`;
+    window.open(waUrl, '_blank');
+
+    // 3. Show the Modal with the countdown
+    showSuccessModal(orderNumber);
+
+    // 4. Reset the form
+    document.getElementById('orderForm').reset();
+    document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+    orderItems = [];
+    updateOrder();
+}
     } catch (error) {
         document.getElementById('loading').style.display = 'none';
         alert("Submission Error: " + error.message);
     }
 });
 
-function showSuccessModal(orderNumber) {
-    alert("Success! Order Number: " + orderNumber);
-    window.location.reload();
+    
+        function showSuccessModal(orderNumber) {
+            const modal = document.getElementById('successModal');
+            const modalNum = document.getElementById('modalOrderNumber');
+            const countdownDisplay = document.getElementById('redirectCountdown');
 
-}
+            if (modal) {
+                if (modalNum) modalNum.textContent = orderNumber;
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden'; // Prevents scrolling background
+
+                let countdown = 5;
+                if (countdownDisplay) {
+                    countdownDisplay.textContent = countdown;
+                    const interval = setInterval(() => {
+                        countdown--;
+                        countdownDisplay.textContent = countdown;
+                        if (countdown <= 0) {
+                            clearInterval(interval);
+                            window.location.reload(); // Refresh after 5 seconds
+                        }
+                    }, 1000);
+                }
+            } else {
+                // Fallback if modal HTML is missing
+                alert("Success! Order Number: " + orderNumber);
+                window.location.reload();
+            }
+        }
