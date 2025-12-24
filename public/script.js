@@ -3,7 +3,7 @@
 // ============================================
 const USE_APPS_SCRIPT = true;   
 const USE_NODEJS = true; // Set to true to test your Node.js server
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCGM8lBnjEMy6-kHEbzg5BywiTSAcwKrcZNQgUgWykUfvXXO34ZE7yOg1IWBGHB537kg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGc3g4jdYWAckG-ZXmBzTI0DmYqvBAIyQ4bLnc3DbujzDa62ySmwFy7RMpoqQ-2tYqTg/exec';
 
 const NODEJS_URL = '/submit-order';
 const WHATSAPP_NUMBER = '12461234567';
@@ -185,4 +185,5 @@ document.getElementById('orderForm').addEventListener('submit', async function(e
 function showSuccessModal(orderNumber) {
     alert("Success! Order Number: " + orderNumber);
     window.location.reload();
+
 }
