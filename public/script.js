@@ -3,6 +3,28 @@
 // ============================================
 const NODEJS_URL = '/submit-order';
 const WHATSAPP_NUMBER = '12462367556'; // Your business number
+
+// 1. Extract the WhatsApp number from the URL
+const urlParams = new URLSearchParams(window.location.search);
+const waNumber = urlParams.get('wa_number'); // Captures the 'hidden' number
+
+// 2. When the user submits the form
+async function submitOrder() {
+    const orderData = {
+        customerName: document.getElementById('name').value,
+        phoneNumber: waNumber || "Unknown", // Use the captured URL number
+        orderItems: cart, 
+        totalAmount: total,
+        orderType: "WhatsApp"
+    };
+
+    // Send to your Render server
+    const response = await fetch('/submit-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+    });
+}
 let orderItems = [];
 
 // ============================================
@@ -74,7 +96,7 @@ function showSuccessModal(orderNumber, orderData) {
                     `*Total:* ${orderData.totalAmount}\n` +
                     `*Type:* ${orderData.orderType}`
                 );
-                window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`;
+                window.location.href = `https://wa.me/${WHATSAPP_NUMBER}`;
             }
         }, 1000);
     }
@@ -193,8 +215,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('loading').style.display = 'none';
                 alert("Error: " + error.message);
             }
+
         });
-    }
+
+        // Inside your form submit logic
+        const orderData = {
+        // ... other data ...
+        orderType: document.getElementById('orderType').value, // Ensure values are 'WhatsApp', 'Phone', or 'Walk-In'
+        };
+
+        }
 
     console.log("✅ All systems go.");
 });
