@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>East Moon Restaurant - Order Online</title>
+  <style>
+    /* ... (Your existing CSS styles remain here) ... */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+      min-height: 100vh;
+      padding: 0;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      font-size: 14px;
+      opacity: 0.95;
+    }
+    
+    .form-content {
+      padding: 15px;
+      padding-bottom: 80px;
+    }
+    
+    .form-section {
+      margin-bottom: 25px;
+    }
+    
+    .section-title {
+      color: #8B0000;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #DC143C;
+      padding-bottom: 8px;
+    }
+    
+    .form-group {
+      margin-bottom: 18px;
+    }
+    
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    
+    input[type="text"],
+    input[type="tel"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #DC143C;
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    select {
+      appearance: none;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E") no-repeat right 12px center;
+      padding-right: 35px;
+      cursor: pointer;
+    }
+    
+    .required {
+      color: #DC143C;
+    }
+    
+    .category-header {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      margin: 15px 0 10px 0;
+      border-left: 4px solid #DC143C;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    
+    .category-header:active {
+      background: #e9ecef;
+    }
+    
+    .category-header .arrow {
+      transition: transform 0.3s;
+      font-size: 20px;
+    }
+    
+    .category-header.active .arrow {
+      transform: rotate(180deg);
+    }
+    
+    .menu-items {
+      display: none;
+      margin-bottom: 15px;
+    }
+    
+    .menu-items.show {
+      display: block;
+    }
+    
+    .menu-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: white;
+    }
+    
+    .menu-item:active {
+      transform: scale(0.98);
+    }
+    
+    .menu-item.selected {
+      border-color: #DC143C;
+      background-color: #ffe6e6;
+    }
+    
+    .item-checkbox {
+      margin-right: 12px;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .item-info {
+      flex: 1;
+    }
+    
+    .item-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 15px;
+      margin-bottom: 3px;
+    }
+    
+    .item-description {
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+      line-height: 1.4;
+    }
+    
+    .item-price {
+      color: #DC143C;
+      font-weight: bold;
+      font-size: 16px;
+      margin-left: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    
+    .quantity-control {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+    
+    .menu-item.selected .quantity-control {
+      display: flex;
+    }
+    
+    .qty-btn {
+      width: 35px;
+      height: 35px;
+      border: 2px solid #DC143C;
+      background: white;
+      color: #DC143C;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .qty-btn:active {
+      background: #DC143C;
+      color: white;
+      transform: scale(0.9);
+    }
+    
+    .qty-display {
+      min-width: 30px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    .order-summary {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px solid #e0e0e0;
+    }
+    
+    .order-summary h4 {
+      color: #8B0000;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+    
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #dee2e6;
+      font-size: 14px;
+    }
+    
+    .summary-subtotal {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0 8px 0;
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+      border-top: 2px solid #dee2e6;
+      margin-top: 8px;
+    }
+    
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 0 5px 0;
+      font-weight: 700;
+      font-size: 20px;
+      color: #8B0000;
+      border-top: 3px solid #DC143C;
+      margin-top: 8px;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 15px;
+    }
+    
+    .message.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #DC143C;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Success Modal Styles */
+   /* --- FIXED SUCCESS MODAL FOR ANDROID --- */
+    .success-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%; 
+      /* Use dvh (Dynamic Viewport Height) if browser supports it */
+      height: 100dvh; 
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      
+      /* Changed from center to flex-start + padding to prevent cutoff */
+      display: none; 
+      align-items: flex-start; 
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto; /* Allows scrolling if the phone is small */
+      backdrop-filter: blur(5px);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .success-modal.show {
+      display: flex;
+    }
+    
+    
+    .success-modal-content {
+      background: white;
+      border-radius: 15px;
+      padding: 30px 20px; /* Adjusted padding for better mobile fit */
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      /* Margin auto handles the vertical centering safely */
+      margin-top: auto;
+      margin-bottom: auto;
+      position: relative;
+      animation: slideUp 0.4s ease-out;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .success-checkmark {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #28a745;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 50px;
+      color: white;
+      animation: scaleIn 0.5s ease-out;
+    }
+    
+    @keyframes scaleIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    .success-modal h2 {
+      color: #28a745;
+      margin-bottom: 15px;
+      font-size: 28px;
+    }
+    
+    .success-modal .order-number {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #DC143C;
+    }
+    
+    .success-modal .order-number span {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .success-modal .order-number strong {
+      color: #8B0000;
+      font-size: 24px;
+      display: block;
+      margin-top: 5px;
+      letter-spacing: 1px;
+    }
+    
+    .success-modal .info-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+      color: #856404;
+      text-align: left;
+    }
+    
+    .success-modal .info-box strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+    
+    .success-modal p {
+      color: #666;
+      line-height: 1.6;
+      margin: 15px 0;
+    }
+    
+    .countdown-box {
+      margin: 30px 0;
+      padding: 20px;
+      background: #e3f2fd;
+      border-radius: 10px;
+      border-left: 4px solid #2196F3;
+    }
+    
+    .countdown-box p {
+      color: #1976d2;
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .countdown-number {
+      font-size: 48px;
+      font-weight: bold;
+      color: #DC143C;
+      display: block;
+      margin: 10px 0;
+    }
+    
+    @media (min-width: 600px) {
+      .header h1 {
+        font-size: 32px;
+      }
+      
+      .container {
+        margin: 20px auto;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        min-height: auto;
+      }
+      
+      .header {
+        border-radius: 15px 15px 0 0;
+      }
+      
+      body {
+        padding: 20px;
+      }
+      
+      .form-content {
+        padding: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🥡 East Moon Restaurant</h1>
+      <p>Place Your Order - Cash Only</p>
+    </div>
+    
+    <div class="form-content">
+      <div id="message" class="message"></div>
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Submitting your order...</p>
+      </div>
+      
+      <form id="orderForm">
+        <div class="form-section">
+          <div class="section-title">📋 Your Information</div>
+          
+          <input type="hidden" id="waNumberFromURL" name="waNumberFromURL"> <div class="form-group">
+            <label for="customerName">Full Name <span class="required">*</span></label>
+            <input type="text" id="customerName" name="customerName" required placeholder="John Doe">
+          </div>
+          
+          <div class="form-group">
+            <label for="phoneNumber">Phone Number <span class="required">*</span></label>
+            <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="246-XXX-XXXX">
+          </div>
+          
+          <div class="form-group">
+            <label for="deliveryAddress">Delivery Address <span class="required">*</span></label>
+            <textarea id="deliveryAddress" name="deliveryAddress" required placeholder="Street, parish, landmarks"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="orderType">Order Type <span class="required">*</span></label>
+            <select id="orderType" name="orderType" required>
+              <option value="">-- Select --</option>
+              <option value="Delivery">🚗 Delivery (10% service charge)</option>
+              <option value="Takeout">🥡 Takeout</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <div class="section-title">🍜 Select Your Dishes</div>
+          
+          <div class="category-header" data-target="appetizers">
+            <span>🥟 APPETIZERS</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div id="appetizers" class="menu-items">
+            <div class="menu-item" data-item="Spring Roll" data-price="6.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Spring Roll</div>
+              </div>
+              <span class="item-price">$6.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="French Fries" data-price="13.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">French Fries</div>
+              </div>
+              <span class="item-price">$13.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="B.B.Q. Pork" data-price="13.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">B.B.Q. Pork</div>
+              </div>
+              <span class="item-price">$13.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="B.B.Q. Spare Ribs" data-price="35.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">B.B.Q. Spare Ribs</div>
+              </div>
+              <span class="item-price">$35.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Breaded Jumbo Shrimp" data-price="38.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Breaded Jumbo Shrimp</div>
+              </div>
+              <span class="item-price">$38.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="category-header" data-target="fried-rice">
+            <span>🍚 FRIED RICE</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div id="fried-rice" class="menu-items">
+            <div class="menu-item" data-item="Special Fried Rice" data-price="34.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Special Fried Rice</div>
+                <div class="item-description">Beef, Chicken, Pork, Shrimp</div>
+              </div>
+              <span class="item-price">$34.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Chinese Fried Rice" data-price="33.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Chinese Fried Rice</div>
+                <div class="item-description">Chicken, Pork, Shrimp</div>
+              </div>
+              <span class="item-price">$33.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Mixed Fried Rice" data-price="32.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Mixed Fried Rice</div>
+                <div class="item-description">Chicken, Pork</div>
+              </div>
+              <span class="item-price">$32.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Chicken Fried Rice" data-price="25.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Chicken Fried Rice</div>
+              </div>
+              <span class="item-price">$25.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Beef Fried Rice" data-price="28.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Beef Fried Rice</div>
+              </div>
+              <span class="item-price">$28.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Pork Fried Rice" data-price="25.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Pork Fried Rice</div>
+              </div>
+              <span class="item-price">$25.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Shrimp Fried Rice" data-price="28.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Shrimp Fried Rice</div>
+              </div>
+              <span class="item-price">$28.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Vegetable Fried Rice" data-price="20.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Vegetable Fried Rice</div>
+              </div>
+              <span class="item-price">$20.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="category-header" data-target="chow-mein">
+            <span>🍜 CHOW MEIN</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div id="chow-mein" class="menu-items">
+            <div class="menu-item" data-item="Chinese Chow Mein" data-price="33.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Chinese Chow Mein</div>
+                <div class="item-description">Chicken, Pork, Shrimp</div>
+              </div>
+              <span class="item-price">$33.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Mixed Chow Mein" data-price="32.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Mixed Chow Mein</div>
+                <div class="item-description">Chicken, Pork</div>
+              </div>
+              <span class="item-price">$32.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Beef Chow Mein" data-price="28.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Beef Chow Mein</div>
+              </div>
+              <span class="item-price">$28.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Shrimp Chow Mein" data-price="18.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Shrimp Chow Mein</div>
+              </div>
+              <span class="item-price">$18.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="category-header" data-target="sweet-sour">
+            <span>🍯 SWEET & SOUR</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div id="sweet-sour" class="menu-items">
+            <div class="menu-item" data-item="Sweet & Sour Spare Ribs" data-price="40.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Sweet & Sour Spare Ribs</div>
+              </div>
+              <span class="item-price">$40.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Sweet & Sour Chicken Balls" data-price="25.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Sweet & Sour Chicken Balls</div>
+              </div>
+              <span class="item-price">$25.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Sweet & Sour Breaded Shrimp" data-price="38.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Sweet & Sour Breaded Shrimp</div>
+              </div>
+              <span class="item-price">$38.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="category-header" data-target="cantonese">
+            <span>⭐ CANTONESE SPECIALTIES</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div id="cantonese" class="menu-items">
+            <div class="menu-item" data-item="Great Wok Fried Shelled Shrimp" data-price="43.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Great Wok Fried Shelled Shrimp</div>
+                <div class="item-description">Jumbo prawns with sliced onion in tangy barbecue sauce</div>
+              </div>
+              <span class="item-price">$43.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Crispy Beef" data-price="43.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Crispy Beef</div>
+                <div class="item-description">Tender beef deep fried with spicy tangy garlic sauce</div>
+              </div>
+              <span class="item-price">$43.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="Lemon Chicken" data-price="43.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">Lemon Chicken</div>
+                <div class="item-description">Chef's secret tangy lemon sauce with chicken breast</div>
+              </div>
+              <span class="item-price">$43.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+            
+            <div class="menu-item" data-item="General Tao's Chicken" data-price="43.00">
+              <input type="checkbox" class="item-checkbox">
+              <div class="item-info">
+                <div class="item-name">General Tao's Chicken</div>
+                <div class="item-description">Crispy chicken with spicy sweet and sour sauce</div>
+              </div>
+              <span class="item-price">$43.00</span>
+              <div class="quantity-control">
+                <button type="button" class="qty-btn qty-minus">-</button>
+                <span class="qty-display">1</span>
+                <button type="button" class="qty-btn qty-plus">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="order-summary" id="orderSummary" style="display:none;">
+          <h4>📋 Your Order</h4>
+          <div id="summaryItems"></div>
+          <div id="summaryCalculations"></div>
+        </div>
+        
+        <div class="form-section">
+          <div class="section-title">📝 Special Instructions</div>
+          <div class="form-group">
+            <textarea id="specialInstructions" name="specialInstructions" placeholder="Optional - any special requests or dietary restrictions"></textarea>
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-btn" id="submitBtn" disabled>Submit Order</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="successModal" class="success-modal">
+    <div class="success-modal-content">
+      <div class="success-checkmark">✓</div>
+      <h2>Order Confirmed! 🎉</h2>
+      
+      <div class="order-number">
+        <span>Your Order Number:</span>
+        <strong id="modalOrderNumber">EM12121234</strong>
+      </div>
+      
+      <p>
+        Thank you for your order! We've received it and you'll receive a WhatsApp confirmation shortly.
+      </p>
+      
+      <div class="info-box">
+        <strong>📱 Check Your WhatsApp!</strong>
+        You'll receive your order confirmation via WhatsApp in a few moments.
+      </div>
+      
+      <p style="font-size: 14px; margin-top: 15px;">
+        <strong>Payment:</strong> Cash only on delivery or pickup.
+      </p>
+      
+      <div class="countdown-box">
+        <p>Redirecting to WhatsApp in</p>
+        <span id="redirectCountdown" class="countdown-number">5</span>
+      </div>
+      
+      <p style="font-size: 13px; color: #999; text-align: center; margin-top: 10px;">
+        Please wait while we open WhatsApp...
+      </p>
+    </div>
+  </div>
+
+<script>
+
+// ============================================
+    // CONFIGURATION
+    // ============================================
+    
+    // 🔧 TOGGLE INTEGRATIONS (true = enabled, false = disabled)
+    const USE_APPS_SCRIPT = true;   // Set to false to disable Google Sheets
+    const USE_NODEJS = false;         // Set to false to disable Node.js/Supabase
+    
+    // Apps Script URL (Google Sheets integration)
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCGM8lBnjEMy6-kHEbzg5BywiTSAcwKrcZNQgUgWykUfvXXO34ZE7yOg1IWBGHB537kg/exec';
+
+    // Node.js URL (Supabase integration)
+    // 🔧 FOR LOCAL TESTING:
+    const NODEJS_URL = 'http://localhost:3000/api/orders';
+    // 🚀 FOR PRODUCTION:
+    // const NODEJS_URL = 'https://east-moon-api.onrender.com/api/orders';
+    
+    const WHATSAPP_NUMBER = '12461234567';
+    
+    // ============================================
+    // APPLICATION CODE
+    // ============================================
+    
+    let orderItems = [];
+    let customerWaNumber = '';
+    
+    // Disable HTML5 validation - use custom validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('orderForm');
+        form.setAttribute('novalidate', 'novalidate');
+        
+        console.log('🔧 Integration Status:');
+        console.log('  Apps Script:', USE_APPS_SCRIPT ? '✅ Enabled' : '❌ Disabled');
+        console.log('  Node.js:', USE_NODEJS ? '✅ Enabled' : '❌ Disabled');
+
+ // Category toggle
+    document.querySelectorAll('.category-header').forEach(header => {
+      header.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const target = document.getElementById(targetId);
+        const isShown = target.classList.contains('show');
+        
+        document.querySelectorAll('.menu-items').forEach(items => items.classList.remove('show'));
+        document.querySelectorAll('.category-header').forEach(h => h.classList.remove('active'));
+        
+        if (!isShown) {
+          target.classList.add('show');
+          this.classList.add('active');
+        }
+      });
+    });
+
+
+        // Menu item selection
+    document.querySelectorAll('.menu-item').forEach(item => {
+      const checkbox = item.querySelector('.item-checkbox');
+      
+      checkbox.addEventListener('change', function() {
+        if (this.checked) {
+          item.classList.add('selected');
+        } else {
+          item.classList.remove('selected');
+          item.querySelector('.qty-display').textContent = '1';
+        }
+        updateOrder();
+      });
+      
+      item.addEventListener('click', function(e) {
+        if (e.target.classList.contains('qty-btn') || e.target === checkbox) {
+          return;
+        }
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+      });
+    });
+    
+    // Quantity controls
+    document.querySelectorAll('.qty-plus').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const display = this.previousElementSibling;
+        let qty = parseInt(display.textContent);
+        qty++;
+        display.textContent = qty;
+        updateOrder();
+      });
+    });
+    
+    document.querySelectorAll('.qty-minus').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const display = this.nextElementSibling;
+        let qty = parseInt(display.textContent);
+        if (qty > 1) {
+          qty--;
+          display.textContent = qty;
+          updateOrder();
+        }
+      });
+    });
+    
+    document.getElementById('orderType').addEventListener('change', updateOrder);
+    
+    function updateOrder() {
+      orderItems = [];
+      let subtotal = 0;
+      
+      document.querySelectorAll('.menu-item.selected').forEach(item => {
+        const name = item.getAttribute('data-item');
+        const price = parseFloat(item.getAttribute('data-price'));
+        const qty = parseInt(item.querySelector('.qty-display').textContent);
+        const itemSubtotal = price * qty;
+        
+        orderItems.push({
+          name: name,
+          price: price,
+          quantity: qty,
+          subtotal: itemSubtotal
+        });
+        
+        subtotal += itemSubtotal;
+      });
+
+      if (orderItems.length > 0) {
+        summaryDiv.style.display = 'block';
+        
+        summaryItems.innerHTML = orderItems.map(item => `
+          <div class="summary-item">
+            <span>${item.name} × ${item.quantity}</span>
+            <span>$${item.subtotal.toFixed(2)}</span>
+          </div>
+        `).join('');
+        
+        let total = subtotal;
+        let calculationsHTML = `
+          <div class="summary-subtotal">
+            <span>Subtotal:</span>
+            <span>$${subtotal.toFixed(2)}</span>
+          </div>
+        `;
+        
+        if (orderType === 'Delivery') {
+          const serviceCharge = subtotal * 0.10;
+          total = subtotal + serviceCharge;
+          calculationsHTML += `
+            <div class="summary-item">
+              <span>Service Charge (10%):</span>
+              <span>$${serviceCharge.toFixed(2)}</span>
+            </div>
+          `;
+        }
+        
+        calculationsHTML += `
+          <div class="summary-total">
+            <span>TOTAL:</span>
+            <span>$${total.toFixed(2)} BBD</span>
+          </div>
+        `;
+        
+        summaryCalculations.innerHTML = calculationsHTML;
+        submitBtn.disabled = false;
+      } else {
+        summaryDiv.style.display = 'none';
+        submitBtn.disabled = true;
+      }
+    }   
+
+
+    });
+    
+    // Get WhatsApp number from URL parameter
+    function getParameterByName(name, url = window.location.href) {
+        name = name.replace(/[\[\]]/g, '\\$&');
+        const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+        const results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+
+    customerWaNumber = getParameterByName('wa_number'); 
+    if (customerWaNumber) {
+        document.getElementById('waNumberFromURL').value = customerWaNumber.replace(/[^0-9]/g, '');
+        console.log('Customer WA Number from URL:', customerWaNumber);
+    }
+    
+   
+    
+
+      
+      const summaryDiv = document.getElementById('orderSummary');
+      const summaryItems = document.getElementById('summaryItems');
+      const summaryCalculations = document.getElementById('summaryCalculations');
+      const submitBtn = document.getElementById('submitBtn');
+      const orderType = document.getElementById('orderType').value;
+      
+     
+    
+    function showSuccessModal(orderNumber) {
+      document.getElementById('modalOrderNumber').textContent = orderNumber;
+      document.getElementById('successModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      
+      let countdown = 5;
+      const countdownDisplay = document.getElementById('redirectCountdown');
+      
+      if (countdownDisplay) {
+        countdownDisplay.textContent = countdown;
+        
+        const countdownInterval = setInterval(() => {
+          countdown--;
+          countdownDisplay.textContent = countdown;
+          
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            window.location.reload();
+          }
+        }, 1000);
+      }
+    }
+    
+    // ============================================
+    // SEND TO APPS SCRIPT (GOOGLE SHEETS)
+    // ============================================
+    
+    async function sendToAppsScript(formData) {
+      if (!USE_APPS_SCRIPT) {
+        console.log('📝 Apps Script: Disabled');
+        return { success: true, skipped: true };
+      }
+      
+      console.log('📝 Sending to Apps Script...');
+      
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const responseText = await response.text();
+        const result = JSON.parse(responseText);
+        
+        if (result.success) {
+          console.log('✅ Apps Script: Order saved to Google Sheets');
+        } else {
+          console.error('❌ Apps Script Error:', result.message);
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('❌ Apps Script Error:', error.message);
+        return { success: false, message: error.message };
+      }
+    }
+    
+    // ============================================
+    // SEND TO NODE.JS (SUPABASE)
+    // ============================================
+    
+    async function sendToNodeJS(formData) {
+      if (!USE_NODEJS) {
+        console.log('🖥️ Node.js: Disabled');
+        return { success: true, skipped: true };
+      }
+      
+      console.log('🖥️ Sending to Node.js...');
+      
+      try {
+        const response = await fetch(NODEJS_URL, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const responseText = await response.text();
+        const result = JSON.parse(responseText);
+        
+        if (result.success) {
+          console.log('✅ Node.js: Order saved to Supabase');
+        } else {
+          console.error('❌ Node.js Error:', result.message);
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('❌ Node.js Error:', error.message);
+        return { success: false, message: error.message };
+      }
+    }
+    
+    // ============================================
+    // FORM SUBMISSION - DUAL INTEGRATION
+    // ============================================
+    
+    document.getElementById('orderForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      console.log('📋 Form submitted');
+      
+      // ============================================
+      // VALIDATION
+      // ============================================
+      
+      const customerName = document.getElementById('customerName').value.trim();
+      const clientPhoneNumber = document.getElementById('phoneNumber').value.trim();
+      const waNumberFromURL = document.getElementById('waNumberFromURL').value.trim();
+      const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+      const orderType = document.getElementById('orderType').value;
+      const specialInstructions = document.getElementById('specialInstructions').value.trim();
+      
+      if (!customerName) {
+        showMessage('❌ Please enter your name', 'error');
+        document.getElementById('customerName').focus();
+        return;
+      }
+      
+      if (!clientPhoneNumber) {
+        showMessage('❌ Please enter your phone number', 'error');
+        document.getElementById('phoneNumber').focus();
+        return;
+      }
+      
+      if (!deliveryAddress) {
+        showMessage('❌ Please enter your delivery address', 'error');
+        document.getElementById('deliveryAddress').focus();
+        return;
+      }
+      
+      if (!orderType) {
+        showMessage('❌ Please select order type', 'error');
+        document.getElementById('orderType').focus();
+        return;
+      }
+      
+      if (orderItems.length === 0) {
+        showMessage('❌ Please select at least one menu item', 'error');
+        return;
+      }
+      
+      // ============================================
+      // PREPARE ORDER DATA
+      // ============================================
+      
+      let subtotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+      let total = orderType === 'Delivery' ? subtotal * 1.10 : subtotal;
+      
+      const orderDetails = orderItems.map(item => 
+        `${item.name} x${item.quantity} = $${item.subtotal.toFixed(2)}`
+      ).join('\n');
+      
+      const totalAmount = '$' + total.toFixed(2) + ' BBD';
+      
+      console.log('📊 Order prepared:', { customerName, orderType, total: totalAmount });
+      
+      // ============================================
+      // SHOW LOADING STATE
+      // ============================================
+      
+      document.getElementById('loading').style.display = 'block';
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      // ============================================
+      // CREATE FORM DATA (USED BY BOTH INTEGRATIONS)
+      // ============================================
+      
+      const formData = new FormData();
+      formData.append('customerName', customerName);
+      formData.append('phoneNumber', clientPhoneNumber);
+      formData.append('waNumberFromURL', waNumberFromURL || clientPhoneNumber);
+      formData.append('deliveryAddress', deliveryAddress);
+      formData.append('orderType', orderType);
+      formData.append('orderItems', orderDetails);
+      formData.append('totalAmount', totalAmount);
+      formData.append('specialInstructions', specialInstructions || 'None');
+      
+      // ============================================
+      // SEND TO BOTH INTEGRATIONS (PARALLEL)
+      // ============================================
+      
+      try {
+        console.log('🚀 Sending to integrations...');
+        
+        // Send to both at the same time
+        const [appsScriptResult, nodejsResult] = await Promise.all([
+          sendToAppsScript(formData),
+          sendToNodeJS(formData)
+        ]);
+        
+        document.getElementById('loading').style.display = 'none';
+        
+        // ============================================
+        // CHECK RESULTS
+        // ============================================
+        
+        let orderNumber = null;
+        let hasError = false;
+        let errorMessages = [];
+        
+        // Check Apps Script result
+        if (USE_APPS_SCRIPT && !appsScriptResult.skipped) {
+          if (appsScriptResult.success) {
+            orderNumber = appsScriptResult.orderNumber;
+            console.log('✅ Apps Script succeeded');
+          } else {
+            hasError = true;
+            errorMessages.push('Google Sheets: ' + appsScriptResult.message);
+          }
+        }
+        
+        // Check Node.js result
+        if (USE_NODEJS && !nodejsResult.skipped) {
+          if (nodejsResult.success) {
+            orderNumber = orderNumber || nodejsResult.orderNumber;
+            console.log('✅ Node.js succeeded');
+          } else {
+            hasError = true;
+            errorMessages.push('Database: ' + nodejsResult.message);
+          }
+        }
+        
+        // ============================================
+        // HANDLE SUCCESS/FAILURE
+        // ============================================
+        
+        // If at least one integration succeeded, show success
+        const atLeastOneSucceeded = 
+          (USE_APPS_SCRIPT && appsScriptResult.success) ||
+          (USE_NODEJS && nodejsResult.success) ||
+          (!USE_APPS_SCRIPT && !USE_NODEJS); // Both disabled
+        
+        if (atLeastOneSucceeded && orderNumber) {
+          console.log('🎉 Order submitted successfully:', orderNumber);
+          
+          // Show warning if one failed but one succeeded
+          if (hasError) {
+            console.warn('⚠️ Partial success. Errors:', errorMessages.join(', '));
+            showMessage('⚠️ Order submitted but some integrations failed: ' + errorMessages.join(', '), 'error');
+            
+            // Still show success modal after 2 seconds
+            setTimeout(() => {
+              showSuccessModal(orderNumber);
+            }, 2000);
+          } else {
+            showSuccessModal(orderNumber);
+          }
+          
+          // Reset form
+          document.getElementById('orderForm').reset();
+          document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+          document.querySelectorAll('.menu-items').forEach(el => el.classList.remove('show'));
+          document.querySelectorAll('.category-header').forEach(el => el.classList.remove('active'));
+          orderItems = [];
+          updateOrder();
+          
+          submitBtn.textContent = 'Submit Order';
+          submitBtn.disabled = false;
+          
+        } else {
+          // Both failed
+          console.error('❌ All integrations failed');
+          showMessage('✗ Order submission failed: ' + errorMessages.join(', '), 'error');
+          submitBtn.textContent = 'Submit Order';
+          submitBtn.disabled = false;
+        }
+        
+      } catch (error) {
+        console.error('💥 Submission error:', error);
+        document.getElementById('loading').style.display = 'none';
+        submitBtn.textContent = 'Submit Order';
+        submitBtn.disabled = false;
+        showMessage('✗ Unexpected error: ' + error.message, 'error');
+      }
+    });
+    
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message ' + type;
+      msg.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      setTimeout(() => msg.style.display = 'none', 8000);
+    }
+  </script>
+  </body>
+</html>
