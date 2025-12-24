@@ -52,7 +52,7 @@ app.post('/submit-order', async (req, res) => {
         // Uses the wa_number captured from your URL
         await axios.post(`https://graph.facebook.com/v18.0/${process.env.META_PHONE_ID}/messages`, {
             messaging_product: "whatsapp",
-            to: orderData.phoneNumber,
+            to: orderData.userPhone,
             type: "text",
             text: { body: plainTextMessage }
         }, {
