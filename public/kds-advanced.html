@@ -720,6 +720,9 @@
                 ⚙️ Settings
             </button>
             <div class="logo">
+                <div id="connection-status" 
+         style="width: 12px; height: 12px; background: #ff4b2b; border-radius: 50%; margin-right: 8px; transition: 0.3s;" 
+         title="Disconnected"></div>
                 <span>🍜</span>
                 <span>EAST MOON</span>
             </div>
@@ -1616,7 +1619,22 @@
     renderOrders();
     updateLoadIndicator();
 });
+// ============================================
+// CONNECTION MONITOR
+// ============================================
+const statusDot = document.getElementById('connection-status');
 
+socket.on('connect', () => {
+    statusDot.style.background = '#4caf50'; // Green
+    statusDot.title = 'Connected to Server';
+    console.log("🟢 KDS Connected to Render");
+});
+
+socket.on('disconnect', () => {
+    statusDot.style.background = '#ff4b2b'; // Red
+    statusDot.title = 'Disconnected - Check Internet';
+    console.log("🔴 KDS Disconnected");
+});
     </script>
 </body>
 </html>
