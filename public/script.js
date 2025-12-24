@@ -10,21 +10,41 @@ const waNumber = urlParams.get('wa_number'); // Captures the 'hidden' number
 
 // 2. When the user submits the form
 async function submitOrder() {
+    // 1. Prepare Data
     const orderData = {
         customerName: document.getElementById('name').value,
-        phoneNumber: waNumber || "Unknown", // Use the captured URL number
-        orderItems: cart, 
+        phoneNumber: document.getElementById('phone').value,
+        phoneNumber: waNumber, 
+        orderItems: cart,
         totalAmount: total,
         orderType: "WhatsApp"
     };
 
-    // Send to your Render server
-    const response = await fetch('/submit-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-    });
+    try {
+        // 2. Send to Render (This triggers KDS, Trello, and the Meta API)
+        const response = await fetch('/submit-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // 3. THE REDIRECT
+            // Instead of opening a window to 'send' a message,
+            // we redirect them to a confirmation page or back to the chat.
+            alert("Order Sent to Kitchen!");
+            
+            // This closes the browser and goes back to the WhatsApp chat
+            window.location.href = `https://wa.me/${waNumber.replace(/\D/g, '')}`; 
+        }
+    } catch (error) {
+        console.error("Error submitting order:", error);
+    }
 }
+
+
 let orderItems = [];
 
 // ============================================
