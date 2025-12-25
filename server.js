@@ -42,6 +42,7 @@ app.post('/submit-order', async (req, res) => {
                 customer_name: orderData.customerName, // Ensure these match your Supabase columns
                 phone_number: orderData.phoneNumber,
                 user_input: orderData.userInput,
+                delivery_address: orderData.deliveryAddress,
                 order_type: orderData.orderType,
                 total_amount: orderData.totalAmount,
                 order_items: JSON.stringify(orderData.orderItems), // Items must be saved as text or JSON
@@ -53,7 +54,9 @@ app.post('/submit-order', async (req, res) => {
         await axios.post(`https://api.trello.com/1/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, {
             idList: process.env.TRELLO_LIST_ID,
             name: `Order #${orderNumber} - ${orderData.customerName} - ${plainTextMessage}`,
-            desc: `Order sent from ${orderData.phoneNumber} | Customer filled number ${userInput}\n\n${plainTextMessage}`,
+            desc: plainTextMessage
+            
+            //`Order sent from ${orderData.phoneNumber} | Customer filled number ${userInput}\n\n${plainTextMessage}`,
             
         });
 
