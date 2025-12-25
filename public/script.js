@@ -116,6 +116,7 @@ function showSuccessModal(orderNumber, orderData) {
                     `*Total:* ${orderData.totalAmount}\n` +
                     `*Type:* ${orderData.orderType}`
                 );
+                window.location.href = `https://wa.me/${(waNumber)}.replace(/\D/g, '')}?text=${whatsappMsg}`;
                 
             }
         }, 1000);
@@ -233,10 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(result.message);
                 }
 
-                setTimeout(() => {
-                    window.location.href = `https://wa.me/${(waNumber).replace(/\D/g, '')}`;
                 }
-            } catch (error) {
+             catch (error) {
                 document.getElementById('loading').style.display = 'none';
                 alert("Error: " + error.message);
             }
