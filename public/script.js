@@ -2,6 +2,7 @@
 // 1. GLOBAL CONFIGURATION
 // ============================================
 const NODEJS_URL = '/submit-order';
+const chatNumber = '12461367556'; // Your business WhatsApp number
 let orderItems = [];
 
 // Extract the 'wa_number' from the URL globally so all functions can see it
@@ -84,7 +85,7 @@ function showSuccessModal(orderNumber, orderData) {
                     `*Type:* ${orderData.orderType}`
                 );
 
-                window.location.href = `https://wa.me/${cleanNumber}?text=${whatsappMsg}`;
+                window.location.href = `https://wa.me/${chatNumber}`;
             }
         }, 1000);
     }
@@ -246,5 +247,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("✅ All systems go.");
 });
-
 
