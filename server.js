@@ -41,6 +41,7 @@ app.post('/submit-order', async (req, res) => {
                 order_number: orderNumber,
                 customer_name: orderData.customerName, // Ensure these match your Supabase columns
                 phone_number: orderData.phoneNumber,
+                user_phone: orderData.userPhone,
                 order_type: orderData.orderType,
                 total_amount: orderData.totalAmount,
                 order_items: JSON.stringify(orderData.orderItems), // Items must be saved as text or JSON
@@ -59,7 +60,7 @@ app.post('/submit-order', async (req, res) => {
         // Uses the wa_number captured from your URL
         await axios.post(`https://graph.facebook.com/v18.0/${process.env.META_PHONE_ID}/messages`, {
             messaging_product: "whatsapp",
-            to: waNumber,
+            to: userPhone,
             type: "text",
             text: { body: plainTextMessage }
         }, {
