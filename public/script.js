@@ -152,12 +152,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // D. Final Form Submission
     const orderForm = document.getElementById('orderForm');
-    if (orderForm) {
-        ////From here
+     if (orderForm) {
         orderForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    console.log("--- 🛠️ STARTING DIAGNOSTIC LOG ---");
+            e.preventDefault();
+            
+            const customerName = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('userInput').value.trim();
+        
+
+            if (!customerName || !phone || orderItems.length === 0) {
+                alert("Please complete all required fields.");
+                return;
+            }
 
     // List of every ID your script expects to find in the HTML
     const requiredIds = [
@@ -240,4 +246,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("✅ All systems go.");
 });
+
 
