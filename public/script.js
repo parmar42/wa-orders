@@ -116,6 +116,7 @@ function showSuccessModal(orderNumber, orderData) {
                     `*Total:* ${orderData.totalAmount}\n` +
                     `*Type:* ${orderData.orderType}`
                 );
+
                 window.location.href = `https://wa.me/${(waNumber)}.replace(/\D/g, '')}?text=${whatsappMsg}`;
                 
             }
@@ -192,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const customerName = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('userInput').value.trim();
+        
 
             if (!customerName || !phone || orderItems.length === 0) {
                 alert("Please complete all required fields.");
