@@ -1,8 +1,3 @@
-const supabase = createClient(
-  process.env.SUPABASE_URL, 
-  process.env.SUPABASE_ANON_KEY
-);
-
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
@@ -93,4 +88,5 @@ app.post('/submit-order', async (req, res) => {
 // 5. START SERVER (Crucial for Render)
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+
 });
