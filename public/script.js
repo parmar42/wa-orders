@@ -14,7 +14,7 @@ async function submitOrder() {
     const orderData = {
         customerName: document.getElementById('name').value,
         phoneNumber: document.getElementById('phone').value,
-        phoneNumber: waNumber, 
+        userPhone: waNumber, 
         orderItems: cart,
         totalAmount: total,
         orderType: "WhatsApp"
@@ -116,7 +116,7 @@ function showSuccessModal(orderNumber, orderData) {
                     `*Total:* ${orderData.totalAmount}\n` +
                     `*Type:* ${orderData.orderType}`
                 );
-                window.location.href = `https://wa.me/${WHATSAPP_NUMBER}`;
+                
             }
         }, 1000);
     }
@@ -149,21 +149,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.menu-item').forEach(item => {
         const checkbox = item.querySelector('.item-checkbox');
         
-        // Checkbox Logic
         checkbox.addEventListener('change', () => {
             item.classList.toggle('selected', checkbox.checked);
             if (!checkbox.checked) item.querySelector('.qty-display').textContent = '1';
             updateOrder();
         });
 
-        // Click anywhere on item (except buttons) to select
         item.addEventListener('click', (e) => {
             if (e.target.closest('.qty-btn') || e.target === checkbox) return;
             checkbox.checked = !checkbox.checked;
             checkbox.dispatchEvent(new Event('change'));
         });
 
-        // Quantity Plus
         item.querySelector('.qty-plus').addEventListener('click', (e) => {
             e.stopPropagation();
             const display = item.querySelector('.qty-display');
@@ -171,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateOrder();
         });
 
-        // Quantity Minus
         item.querySelector('.qty-minus').addEventListener('click', (e) => {
             e.stopPropagation();
             const display = item.querySelector('.qty-display');
@@ -201,9 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Extract the 'wa_number' from the URL (if available)
+            const urlParams = new URLSearchParams(window.location.search);
+            const waNumber = urlParams.get('wa_number');
+
             const orderData = {
                 customerName,
-                phoneNumber: phone,
+                phoneNumber: waNumber || phone, // Prioritize the URL number for accuracy
                 deliveryAddress: document.getElementById('deliveryAddress')?.value || 'N/A',
                 orderType: document.getElementById('orderType').value,
                 orderItems: orderItems,
@@ -235,16 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('loading').style.display = 'none';
                 alert("Error: " + error.message);
             }
-
         });
-
-        // Inside your form submit logic
-        const orderData = {
-        // ... other data ...
-        orderType: document.getElementById('orderType').value, // Ensure values are 'WhatsApp', 'Phone', or 'Walk-In'
-        };
-
-        }
+    }
 
     console.log("✅ All systems go.");
 });
