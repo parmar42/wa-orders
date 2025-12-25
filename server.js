@@ -41,7 +41,7 @@ app.post('/submit-order', async (req, res) => {
                 order_number: orderNumber,
                 customer_name: orderData.customerName, // Ensure these match your Supabase columns
                 phone_number: orderData.phoneNumber,
-                user_phone: orderData.userPhone,
+                user_input: orderData.userInput,
                 order_type: orderData.orderType,
                 total_amount: orderData.totalAmount,
                 order_items: JSON.stringify(orderData.orderItems), // Items must be saved as text or JSON
@@ -53,14 +53,14 @@ app.post('/submit-order', async (req, res) => {
         await axios.post(`https://api.trello.com/1/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, {
             idList: process.env.TRELLO_LIST_ID,
             name: `Order #${orderNumber} - ${orderData.customerName} - ${plainTextMessage}`,
-            desc: plainTextMessage
+            desc: `Order sent from ${phoneNumber} | Customer filled number ${inputNumber}`\n\n, plainTextMessage
         });
 
         // 4. SEND WHATSAPP (Customer Receipt)
         // Uses the wa_number captured from your URL
         await axios.post(`https://graph.facebook.com/v18.0/${process.env.META_PHONE_ID}/messages`, {
             messaging_product: "whatsapp",
-            to: userPhone,
+            to: phoneNumber,
             type: "text",
             text: { body: plainTextMessage }
         }, {
