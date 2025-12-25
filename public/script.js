@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             const customerName = document.getElementById('customerName').value.trim();
-            const phone = document.getElementById('inputNumber').value.trim();
+            const phone = document.getElementById('userInput').value.trim();
 
             if (!customerName || !phone || orderItems.length === 0) {
                 alert("Please complete all required fields.");
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const orderData = {
                 customerName,
                 phoneNumber: waNumber || phone, // Prioritize the URL number for accuracy
-                inputNumber: document.getElementById('inputNumber').value.trim(),
+                userInput: document.getElementById('userInput').value.trim(),
                 deliveryAddress: document.getElementById('deliveryAddress')?.value || 'N/A',
                 orderType: document.getElementById('orderType').value,
                 orderItems: orderItems,
@@ -231,6 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateOrder();
                 } else {
                     throw new Error(result.message);
+                }
+
+                setTimeout(() => {
+                    window.location.href = `https://wa.me/${(waNumber).replace(/\D/g, '')}`;
                 }
             } catch (error) {
                 document.getElementById('loading').style.display = 'none';
