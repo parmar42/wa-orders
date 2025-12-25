@@ -43,7 +43,7 @@ app.post('/submit-order', async (req, res) => {
                 phone_number: orderData.phoneNumber,
                 order_type: orderData.orderType,
                 total_amount: orderData.totalAmount,
-                items: JSON.stringify(orderData.orderItems), // Items must be saved as text or JSON
+                order_items: JSON.stringify(orderData.orderItems), // Items must be saved as text or JSON
                 status: 'new'
             }]);
 
