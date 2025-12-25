@@ -117,7 +117,7 @@ function showSuccessModal(orderNumber, orderData) {
                     `*Type:* ${orderData.orderType}`
                 );
 
-                window.location.href = `https://wa.me/${(waNumber)}.replace(/\D/g, '')}?text=${whatsappMsg}`;
+                window.location.href = `https://wa.me/${waNumber.replace(/\D/g, '')}`;
                 
             }
         }, 1000);
