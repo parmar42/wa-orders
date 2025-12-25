@@ -1,7 +1,7 @@
 // ============================================
 // 1. GLOBAL CONFIGURATION (OUTSIDE)
 // ============================================
-const NODEJS_URL = '/submit-order';
+/*const NODEJS_URL = '/submit-order';
 const WHATSAPP_NUMBER = '12462367556'; // Your business number
 
 // 1. Extract the WhatsApp number from the URL
@@ -43,7 +43,7 @@ async function submitOrder() {
         console.error("Error submitting order:", error);
     }
 }
-
+*/
 
 let orderItems = [];
 
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             const customerName = document.getElementById('customerName').value.trim();
-            const phone = document.getElementById('phoneNumber').value.trim();
+            const phone = document.getElementById('inputNumber').value.trim();
 
             if (!customerName || !phone || orderItems.length === 0) {
                 alert("Please complete all required fields.");
