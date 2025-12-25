@@ -53,7 +53,8 @@ app.post('/submit-order', async (req, res) => {
         await axios.post(`https://api.trello.com/1/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, {
             idList: process.env.TRELLO_LIST_ID,
             name: `Order #${orderNumber} - ${orderData.customerName} - ${plainTextMessage}`,
-            desc: `Order sent from ${phoneNumber} | Customer filled number ${inputNumber}`\n\n, plainTextMessage
+            desc: `Order sent from ${phoneNumber} | Customer filled number ${inputNumber}\n\n${plainTextMessage}`,
+            
         });
 
         // 4. SEND WHATSAPP (Customer Receipt)
