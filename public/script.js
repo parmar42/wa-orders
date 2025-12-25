@@ -153,16 +153,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // D. Final Form Submission
     const orderForm = document.getElementById('orderForm');
     if (orderForm) {
+        ////From here
         orderForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const customerName = document.getElementById('customerName').value.trim();
-            const phone = document.getElementById('userInput').value.trim();
+    e.preventDefault();
+    
+    console.log("--- 🛠️ STARTING DIAGNOSTIC LOG ---");
 
-            if (!customerName || !phone || orderItems.length === 0) {
-                alert("Please complete all required fields.");
-                return;
-            }
+    // List of every ID your script expects to find in the HTML
+    const requiredIds = [
+        'customerName', 
+        'userInput', 
+        'orderType', 
+        'loading'
+    ];
+
+    let missingAny = false;
+
+    requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            console.log(`✅ Found: ID="${id}"`);
+        } else {
+            console.warn(`❌ MISSING: ID="${id}" (Your HTML needs this)`);
+            missingAny = true;
+        }
+    });
+
+    // Check the special Query Selector for the total
+    const totalEl = document.querySelector('.summary-total span:last-child');
+    if (totalEl) {
+        console.log(`✅ Found: Total Amount element`);
+    } else {
+        console.warn(`❌ MISSING: CSS Selector ".summary-total span:last-child"`);
+        missingAny = true;
+    }
+
+    if (missingAny) {
+        console.error("⛔ STOPPING: The script crashed because the elements above are missing.");
+        alert("Developer Note: Check the F12 Console. Some HTML elements are missing.");
+        return; // Stop the script here so it doesn't throw the 'null' error
+    }
+
+    console.log("🚀 All elements found! Sending data to Render...");
+
+    // ... Rest of your fetch code ...
 
             const orderData = {
                 customerName,
@@ -206,3 +240,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("✅ All systems go.");
 });
+
