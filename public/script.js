@@ -1,54 +1,11 @@
-// ============================================
-// 1. GLOBAL CONFIGURATION (OUTSIDE)
-// ============================================
+// 1. URL CONFIGURATION
+// Use full URL for local testing. Change to '/submit-order' only when deploying to Render.
 const NODEJS_URL = '/submit-order';
-/*const WHATSAPP_NUMBER = '12462367556'; // Your business number
-
-// 1. Extract the WhatsApp number from the URL
-const urlParams = new URLSearchParams(window.location.search);
-const waNumber = urlParams.get('wa_number'); // Captures the 'hidden' number
-
-// 2. When the user submits the form
-async function submitOrder() {
-    // 1. Prepare Data
-    const orderData = {
-        customerName: document.getElementById('name').value,
-        phoneNumber: document.getElementById('phone').value,
-        userPhone: waNumber, 
-        orderItems: cart,
-        totalAmount: total,
-        orderType: "WhatsApp"
-    };
-
-    try {
-        // 2. Send to Render (This triggers KDS, Trello, and the Meta API)
-        const response = await fetch('/submit-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // 3. THE REDIRECT
-            // Instead of opening a window to 'send' a message,
-            // we redirect them to a confirmation page or back to the chat.
-            alert("Order Sent to Kitchen!");
-            
-            // This closes the browser and goes back to the WhatsApp chat
-            window.location.href = `https://wa.me/${waNumber.replace(/\D/g, '')}`; 
-        }
-    } catch (error) {
-        console.error("Error submitting order:", error);
-    }
-}
-*/
 
 let orderItems = [];
 
 // ============================================
-// 2. HELPER FUNCTIONS (OUTSIDE)
+// 2. HELPER FUNCTIONS
 // ============================================
 
 function updateOrder() {
@@ -96,6 +53,10 @@ function showSuccessModal(orderNumber, orderData) {
     const modalNum = document.getElementById('modalOrderNumber');
     const countdownDisplay = document.getElementById('redirectCountdown');
 
+    // Determine the WhatsApp number (URL param first, then user input)
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetPhone = urlParams.get('wa_number') || orderData.userInput;
+
     if (modal) {
         if (modalNum) modalNum.textContent = orderNumber;
         modal.classList.add('show');
@@ -110,6 +71,8 @@ function showSuccessModal(orderNumber, orderData) {
             
             if (countdown <= 0) {
                 clearInterval(interval);
+                
+                // Construct the message
                 const whatsappMsg = encodeURIComponent(
                     `*NEW ORDER: #${orderNumber}*\n` +
                     `*Customer:* ${orderData.customerName}\n` +
@@ -117,15 +80,16 @@ function showSuccessModal(orderNumber, orderData) {
                     `*Type:* ${orderData.orderType}`
                 );
 
-                window.location.href = `https://wa.me/${waNumber.replace(/\D/g, '')}`;
-                
+                // FIXED: Use targetPhone and add the ?text= parameter
+                const cleanNumber = targetPhone.replace(/\D/g, '');
+                window.location.href = `https://wa.me/${cleanNumber}?text=${whatsappMsg}`;
             }
         }, 1000);
     }
 }
 
 // ============================================
-// 3. INTERACTIVITY WRAPPER (INSIDE)
+// 3. INTERACTIVITY WRAPPER
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     console.log("🚀 System Initializing...");
@@ -147,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // B. Menu Item & Quantity Selection
+    // B. Menu Item Selection
     document.querySelectorAll('.menu-item').forEach(item => {
         const checkbox = item.querySelector('.item-checkbox');
         
@@ -181,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // C. Global Selectors
+    // C. Order Type Change
     const orderTypeSelect = document.getElementById('orderType');
     if (orderTypeSelect) orderTypeSelect.addEventListener('change', updateOrder);
 
@@ -190,25 +154,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (orderForm) {
         orderForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+            console.log("Submit button triggered...");
+
             const customerName = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('userInput').value.trim();
-        
+            const address = document.getElementById('deliveryAddress').value.trim();
 
             if (!customerName || !phone || orderItems.length === 0) {
-                alert("Please complete all required fields.");
+                alert("Please select items and provide your name/phone.");
                 return;
             }
 
-            // Extract the 'wa_number' from the URL (if available)
             const urlParams = new URLSearchParams(window.location.search);
             const waNumber = urlParams.get('wa_number');
 
             const orderData = {
                 customerName,
-                phoneNumber: waNumber || phone, // Prioritize the URL number for accuracy
-                userInput: document.getElementById('userInput').value.trim(),
-                deliveryAddress: document.getElementById('deliveryAddress')?.value || 'N/A',
+                phoneNumber: waNumber || phone,
+                userInput: phone,
+                deliveryAddress: address || 'N/A',
                 orderType: document.getElementById('orderType').value,
                 orderItems: orderItems,
                 totalAmount: document.querySelector('.summary-total span:last-child')?.textContent || "$0.00",
@@ -224,6 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(orderData)
                 });
 
+                if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
                 const result = await response.json();
                 document.getElementById('loading').style.display = 'none';
 
@@ -233,16 +199,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('selected'));
                     updateOrder();
                 } else {
-                    throw new Error(result.message);
+                    alert("Order failed: " + result.message);
                 }
-
-                }
-             catch (error) {
+            } catch (error) {
                 document.getElementById('loading').style.display = 'none';
-                alert("Error: " + error.message);
+                console.error("Submission Error:", error);
+                alert("Connection Error: Make sure your Node.js server is running at " + NODEJS_URL);
             }
         });
     }
-
-    console.log("✅ All systems go.");
 });
