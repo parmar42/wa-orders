@@ -1,8 +1,8 @@
 // ============================================
 // 1. GLOBAL CONFIGURATION (OUTSIDE)
 // ============================================
-/*const NODEJS_URL = '/submit-order';
-const WHATSAPP_NUMBER = '12462367556'; // Your business number
+const NODEJS_URL = '/submit-order';
+/*const WHATSAPP_NUMBER = '12462367556'; // Your business number
 
 // 1. Extract the WhatsApp number from the URL
 const urlParams = new URLSearchParams(window.location.search);
