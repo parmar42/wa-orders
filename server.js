@@ -34,13 +34,20 @@ app.post('/submit-order', async (req, res) => {
     console.log("📢 Shouted to KDS:", orderNumber);
 
     try {
-        // 2. SAVE TO SUPABASE (Database)
-        await supabase.from('orders').insert([{ 
-            ...orderData, 
-            order_number: orderNumber,
-            created_at: new Date() 
-        }]);
+       // 2. SAVE TO SUPABASE (Explicitly mapping columns)
+        const { error: dbError } = await supabase
+            .from('orders')
+            .insert([{ 
+                order_number: orderNumber,
+                customer_name: orderData.customerName, // Ensure these match your Supabase columns
+                phone_number: orderData.phoneNumber,
+                order_type: orderData.orderType,
+                total_amount: orderData.totalAmount,
+                items: JSON.stringify(orderData.orderItems), // Items must be saved as text or JSON
+                status: 'new'
+            }]);
 
+        if (dbError) throw dbError; // If Supabase fails, catch it below
         // 3. SEND TO TRELLO (Visual Board)
         await axios.post(`https://api.trello.com/1/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, {
             idList: process.env.TRELLO_LIST_ID,
