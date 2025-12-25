@@ -2,6 +2,10 @@
 // Use full URL for local testing. Change to '/submit-order' only when deploying to Render.
 const NODEJS_URL = '/submit-order';
 
+// Extract the 'wa_number' from the URL globally so all functions can see it
+const urlParams = new URLSearchParams(window.location.search);
+const waNumber = urlParams.get('wa_number');
+
 let orderItems = [];
 
 // ============================================
@@ -165,9 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const waNumber = urlParams.get('wa_number');
-
+           
             const orderData = {
                 customerName,
                 phoneNumber: waNumber || phone,
@@ -209,3 +211,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
