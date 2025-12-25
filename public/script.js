@@ -2,7 +2,7 @@
 // 1. GLOBAL CONFIGURATION
 // ============================================
 const NODEJS_URL = '/submit-order';
-const chatNumber = '12461367556'; // Your business WhatsApp number
+const chatNumber = '12462367556'; // Your business WhatsApp number
 let orderItems = [];
 
 // Extract the 'wa_number' from the URL globally so all functions can see it
