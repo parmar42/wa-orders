@@ -127,7 +127,7 @@ server.listen(PORT, () => {
 
 
 
-const axios = require('axios');
+/*const axios = require('axios');
 
 // Configuration - Use Environment Variables on Render for security!
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
@@ -137,7 +137,7 @@ const WHATSAPP_VERSION = 'v21.0';
 /**
  * Function to send WhatsApp notification
  * Called when the order form is filled/submitted
- */
+ 
 async function sendWhatsAppNotification(orderData) {
     // Construct the URL manually to avoid "Unknown path" errors
     const url = `https://graph.facebook.com/${WHATSAPP_VERSION}/${PHONE_NUMBER_ID}/messages`;
@@ -175,7 +175,7 @@ async function sendWhatsAppNotification(orderData) {
         console.error('❌ WhatsApp API Error:', error.response ? error.response.data : error.message);
     }
 }
-
+**/
 // Example: Triggering when the order form is received
 app.post('/submit-order', (req, res) => {
     const newOrder = req.body;
@@ -189,6 +189,7 @@ app.post('/submit-order', (req, res) => {
     res.status(200).send("Order Received");
 
 });
+
 
 
 
