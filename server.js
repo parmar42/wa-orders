@@ -33,6 +33,34 @@ app.post('/submit-order', async (req, res) => {
     io.emit('new-kds-order', { orderNumber, ...orderData, plainTextMessage });
     console.log("📢 Shouted to KDS:", orderNumber);
 
+
+        
+    // 2. INSERT WHATSAPP SERVICE MESSAGE LOGIC HERE
+    const whatsappUrl = `https://graph.facebook.com/v24.0/${process.env.PHONE_NUMBER_ID}/messages`;
+    
+    try {
+        await axios.post(whatsappUrl, {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: orderData.phoneNumber, // The 'phone' field from your KDS
+            type: "text",
+            text: { 
+                body: `Confirming order #${orderData.orderNumber} for ${orderData.customerName} \n\n ${orderData.orderItems}. We are starting now!` 
+            }
+        }, {
+            headers: {
+                'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('✅ Service message sent');
+    } catch (error) {
+        console.error('❌ WhatsApp Error:', error.response ? error.response.data : error.message);
+    }
+
+    res.sendStatus(200);
+});
+
     try {
        // 2. SAVE TO SUPABASE (Explicitly mapping columns)
         const { error: dbError } = await supabase
@@ -62,7 +90,7 @@ app.post('/submit-order', async (req, res) => {
 
         // 4. SEND WHATSAPP (Customer Receipt)
         // Uses the wa_number captured from your URL
-        await axios.post(`https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, {
+        /*await axios.post(`https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, {
             messaging_product: "whatsapp",
             to: 12462348400,
             type: "text",
@@ -72,7 +100,7 @@ app.post('/submit-order', async (req, res) => {
         });
 
         // If everything succeeds, send this response
-        res.status(200).json({ success: true, orderNumber });
+       **/ res.status(200).json({ success: true, orderNumber });
 
     } catch (error) {
         // If Trello, Supabase, or WhatsApp fails, we log it here
@@ -93,4 +121,70 @@ server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 
 
+});
+
+
+
+
+
+const axios = require('axios');
+
+// Configuration - Use Environment Variables on Render for security!
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
+const WHATSAPP_VERSION = 'v21.0';
+
+/**
+ * Function to send WhatsApp notification
+ * Called when the order form is filled/submitted
+ */
+async function sendWhatsAppNotification(orderData) {
+    // Construct the URL manually to avoid "Unknown path" errors
+    const url = `https://graph.facebook.com/${WHATSAPP_VERSION}/${PHONE_NUMBER_ID}/messages`;
+
+    const payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: orderData.phoneNumber, // Must include country code, e.g., "1246XXXXXXX"
+        type: "template",
+        template: {
+            name: "order_confirmation", // Replace with your approved template name
+            language: { code: "en_US" },
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        { type: "text", text: orderData.customerName },
+                        { type: "text", text: orderData.orderNumber.toString() }
+                    ]
+                }
+            ]
+        }
+    };
+
+    try {
+        const response = await axios.post(url, payload, {
+            headers: {
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('✅ WhatsApp message sent successfully:', response.data);
+    } catch (error) {
+        // Detailed error logging to catch path or permission issues
+        console.error('❌ WhatsApp API Error:', error.response ? error.response.data : error.message);
+    }
+}
+
+// Example: Triggering when the order form is received
+app.post('/submit-order', (req, res) => {
+    const newOrder = req.body;
+    
+    // 1. Process order for KDS
+    io.emit('new-kds-order', newOrder);
+
+    // 2. Send WhatsApp Message
+    sendWhatsAppNotification(newOrder);
+
+    res.status(200).send("Order Received");
 });
