@@ -89,31 +89,7 @@ app.post('/submit-order', async (req, res) => {
         });
 
         // 4. SEND WHATSAPP (Customer Receipt)
-        // Uses the wa_number captured from your URL
-       /* await axios.post(`https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, {
-            messaging_product: "whatsapp",
-            to: orderData.phoneNumber,
-            type: "text",
-            text: { body: plainTextMessage }
-        }, {
-            headers: { 'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}` }
-        });
-
-        // If everything succeeds, send this response
-        res.status(200).json({ success: true, orderNumber });
-
-    } catch (error) {
-        // If Trello, Supabase, or WhatsApp fails, we log it here
-        console.error("Automation Error Log:", error.response?.data || error.message);
-        
-        // We still send success:true to the user because the KDS worked!
-        res.status(200).json({ 
-            success: true, 
-            orderNumber, 
-            note: "Order sent to kitchen, but external automation had an issue." 
-        });
-   **/ }
-});
+      /////////////////////////////////////////////////////
 
 
 // 5. START SERVER (Crucial for Render)
@@ -189,6 +165,7 @@ app.post('/submit-order', (req, res) => {
     res.status(200).send("Order Received");
 
 });
+
 
 
 
