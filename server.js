@@ -184,11 +184,12 @@ app.post('/submit-order', (req, res) => {
     io.emit('new-kds-order', newOrder);
 
     // 2. Send WhatsApp Message
-    sendWhatsAppNotification(newOrder);
+    //sendWhatsAppNotification(newOrder);
 
     res.status(200).send("Order Received");
 
 });
+
 
 
 
