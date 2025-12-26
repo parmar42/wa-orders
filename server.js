@@ -28,7 +28,7 @@ app.post('/submit-order', async (req, res) => {
         .join('\n');
     
     const plainTextMessage = `*Order #${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
-    const whatsappUpdate = `✅ Order confirmed!\n\n*Order ${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
+    const whatsappUpdate = `✅ Order confirmed!\n\n*Order# ${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
     // 1. BROADCAST TO KDS (Immediate - even if others fail)
     io.emit('new-kds-order', { orderNumber, ...orderData, plainTextMessage });
     console.log("📢 Shouted to KDS:", orderNumber);
