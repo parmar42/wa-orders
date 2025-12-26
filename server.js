@@ -104,7 +104,7 @@ app.post('/submit-order', async (req, res) => {
 
     } catch (error) {
         // If Trello, Supabase, or WhatsApp fails, we log it here
-      **/  console.error("Automation Error Log:", error.response?.data || error.message);
+        console.error("Automation Error Log:", error.response?.data || error.message);
         
         // We still send success:true to the user because the KDS worked!
         res.status(200).json({ 
@@ -112,7 +112,7 @@ app.post('/submit-order', async (req, res) => {
             orderNumber, 
             note: "Order sent to kitchen, but external automation had an issue." 
         });
-    }
+   **/ }
 });
 
 
@@ -189,5 +189,6 @@ app.post('/submit-order', (req, res) => {
     res.status(200).send("Order Received");
 
 });
+
 
 
