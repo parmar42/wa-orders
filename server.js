@@ -62,9 +62,9 @@ app.post('/submit-order', async (req, res) => {
 
         // 4. SEND WHATSAPP (Customer Receipt)
         // Uses the wa_number captured from your URL
-        await axios.post(`https://graph.facebook.com/v18.0/${process.env.META_PHONE_ID}/messages`, {
+        await axios.post(`https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, {
             messaging_product: "whatsapp",
-            to: cleanedNumber,
+            to: 12462348400,
             type: "text",
             text: { body: plainTextMessage }
         }, {
@@ -91,5 +91,6 @@ app.post('/submit-order', async (req, res) => {
 // 5. START SERVER (Crucial for Render)
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+
 
 });
