@@ -36,7 +36,7 @@ app.post('/submit-order', async (req, res) => {
 
         
     // 2. INSERT WHATSAPP SERVICE MESSAGE LOGIC HERE
-    /*const whatsappUrl = `https://graph.facebook.com/v24.0/${process.env.PHONE_NUMBER_ID}/messages`;
+    const whatsappUrl = `https://graph.facebook.com/v24.0/${process.env.PHONE_NUMBER_ID}/messages`;
     
     try {
         await axios.post(whatsappUrl, {
@@ -45,7 +45,7 @@ app.post('/submit-order', async (req, res) => {
             to: orderData.phoneNumber, // The 'phone' field from your KDS
             type: "text",
             text: { 
-                body: `Confirming order #${orderData.orderNumber} for ${orderData.customerName} \n\n ${orderData.orderItems}. We are starting now!` 
+                body: `✅ Confirming order #${orderData.orderNumber} for ${orderData.customerName} \n\n ${orderData.orderItems}. We are starting now!` 
             }
         }, {
             headers: {
@@ -60,7 +60,7 @@ app.post('/submit-order', async (req, res) => {
 
     res.sendStatus(200);
 });
-**/
+
     try {
        // 2. SAVE TO SUPABASE (Explicitly mapping columns)
         const { error: dbError } = await supabase
@@ -90,7 +90,7 @@ app.post('/submit-order', async (req, res) => {
 
         // 4. SEND WHATSAPP (Customer Receipt)
         // Uses the wa_number captured from your URL
-        await axios.post(`https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, {
+       /* await axios.post(`https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, {
             messaging_product: "whatsapp",
             to: orderData.phoneNumber,
             type: "text",
@@ -104,7 +104,7 @@ app.post('/submit-order', async (req, res) => {
 
     } catch (error) {
         // If Trello, Supabase, or WhatsApp fails, we log it here
-        console.error("Automation Error Log:", error.response?.data || error.message);
+      **/  console.error("Automation Error Log:", error.response?.data || error.message);
         
         // We still send success:true to the user because the KDS worked!
         res.status(200).json({ 
@@ -189,3 +189,4 @@ app.post('/submit-order', (req, res) => {
     res.status(200).send("Order Received");
 
 });
+
