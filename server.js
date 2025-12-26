@@ -88,6 +88,111 @@ app.post('/submit-order', async (req, res) => {
 });
 
 
+/**
+ * GET ALL ORDERS
+ * GET /api/orders
+ */
+app.get('/api/orders', async (req, res) => {
+    try {
+        const { status, source, limit = 50 } = req.query;
+        
+        let query = supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(parseInt(limit));
+        
+        // Filter by status (can be comma-separated like: new,preparing,ready)
+        if (status) {
+            const statuses = status.split(',');
+            query = query.in('status', statuses);
+        }
+        
+        if (source) {
+            query = query.eq('order_source', source);
+        }
+        
+        const { data: orders, error } = await query;
+        
+        if (error) {
+            console.error('❌ Supabase query error:', error);
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+        
+        console.log(`✅ Fetched ${orders.length} orders from Supabase`);
+        
+        res.json({
+            success: true,
+            count: orders.length,
+            orders: orders
+        });
+        
+    } catch (error) {
+        console.error('❌ Get orders error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+/**
+ * UPDATE ORDER STATUS
+ * PUT /api/orders/:orderNumber/status
+ */
+app.put('/api/orders/:orderNumber/status', async (req, res) => {
+    try {
+        const { orderNumber } = req.params;
+        const { status } = req.body;
+        
+        console.log(`📝 Updating order ${orderNumber} to status: ${status}`);
+        
+        const { data: updatedOrder, error: dbError } = await supabase
+            .from('orders')
+            .update({
+                status: status,
+                updated_at: new Date().toISOString()
+            })
+            .eq('order_number', orderNumber)
+            .select()
+            .single();
+        
+        if (dbError || !updatedOrder) {
+            console.error('❌ Update failed:', dbError);
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found or update failed'
+            });
+        }
+        
+        // Broadcast status change to all connected KDS displays
+        io.emit('order_updated', {
+            orderNumber: orderNumber,
+            status: status,
+            updatedAt: new Date().toISOString()
+        });
+        
+        console.log('✅ Order updated and broadcast to all KDS');
+        
+        res.json({
+            success: true,
+            message: 'Order status updated',
+            order: updatedOrder
+        });
+        
+    } catch (error) {
+        console.error('❌ Status update error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+
 // 5. START SERVER (Crucial for Render)
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
