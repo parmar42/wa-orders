@@ -78,13 +78,13 @@ function showSuccessModal(orderNumber, orderData) {
                 const targetPhone = waNumber || orderData.userInput;
                 const cleanNumber = targetPhone.replace(/\D/g, '');
 
-                const whatsappMsg = encodeURIComponent(
+                /*const whatsappMsg = encodeURIComponent(
                     `*NEW ORDER: #${orderNumber}*\n` +
                     `*Customer:* ${orderData.customerName}\n` +
                     `*Total:* ${orderData.totalAmount}\n` +
                     `*Type:* ${orderData.orderType}`
                 );
-
+                **/
                 window.location.href = `https://wa.me/${chatNumber}`;
             }
         }, 1000);
@@ -247,4 +247,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("✅ All systems go.");
 });
+
 
