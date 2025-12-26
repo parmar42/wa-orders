@@ -36,7 +36,7 @@ app.post('/submit-order', async (req, res) => {
 
         
     // 2. INSERT WHATSAPP SERVICE MESSAGE LOGIC HERE
-    const whatsappUrl = `https://graph.facebook.com/v24.0/${process.env.PHONE_NUMBER_ID}/messages`;
+    /*const whatsappUrl = `https://graph.facebook.com/v24.0/${process.env.PHONE_NUMBER_ID}/messages`;
     
     try {
         await axios.post(whatsappUrl, {
@@ -60,7 +60,7 @@ app.post('/submit-order', async (req, res) => {
 
     res.sendStatus(200);
 });
-
+**/
     try {
        // 2. SAVE TO SUPABASE (Explicitly mapping columns)
         const { error: dbError } = await supabase
@@ -189,4 +189,5 @@ app.post('/submit-order', (req, res) => {
     res.status(200).send("Order Received");
 
 });
+
 
