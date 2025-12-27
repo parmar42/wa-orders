@@ -1368,11 +1368,11 @@
             
             let actionButtons = '';
             if (order.status === 'new') {
-                actionButtons = `<button class="action-btn btn-start" onclick="changeStatus(${order.id}, 'preparing')">Start Cooking</button>`;
+                actionButtons = `<button class="action-btn btn-start">Start Cooking</button>`;
             } else if (order.status === 'preparing') {
-                actionButtons = `<button class="action-btn btn-ready" onclick="changeStatus(${order.id}, 'ready')">Mark Ready</button>`;
+                actionButtons = `<button class="action-btn btn-ready">Mark Ready</button>`;
             } else if (order.status === 'ready') {
-                actionButtons = `<button class="action-btn btn-complete" onclick="changeStatus(${order.id}, 'completed')">Complete</button>`;
+                actionButtons = `<button class="action-btn btn-complete">Complete</button>`;
             }
             
             return `
@@ -1420,6 +1420,40 @@
             `;
         }).join('');
     }
+
+
+    function attachButtonListeners() {
+    // Attach listeners to all status buttons
+    document.querySelectorAll('.btn-start').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.order-card');
+            const orderId = parseInt(card.dataset.orderId);
+            console.log('Start button clicked for order:', orderId);
+            changeStatus(orderId, 'preparing');
+            });
+        });
+    
+        document.querySelectorAll('.btn-ready').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.order-card');
+            const orderId = parseInt(card.dataset.orderId);
+            console.log('Ready button clicked for order:', orderId);
+            changeStatus(orderId, 'ready');
+            });
+        });
+    
+        document.querySelectorAll('.btn-complete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.order-card');
+            const orderId = parseInt(card.dataset.orderId);
+            console.log('Complete button clicked for order:', orderId);
+            changeStatus(orderId, 'completed');
+            });
+        });
+    
+        console.log('✅ Button listeners attached');
+    }
+    
 
     function applyWeightedQueue(ordersArray) {
         const locked = ordersArray.filter(o => o.locked);
