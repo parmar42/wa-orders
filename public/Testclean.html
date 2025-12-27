@@ -1297,11 +1297,11 @@
     
     console.log('✅ changeStatus complete!');
     }
-    async function updateOrderStatusInSupabase(orderNumber, newStatus) {
+    async function updateOrderStatusInSupabase(orderId, newStatus) {
         try {
             console.log(`🔄 Updating ${orderNumber} to ${newStatus} in Supabase...`);
             
-            const response = await fetch(`${CONFIG.NODEJS_URL}/api/orders/${orderNumber}/status`, {
+            const response = await fetch(`${CONFIG.NODEJS_URL}/api/orders/${orderId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
