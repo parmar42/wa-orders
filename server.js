@@ -145,10 +145,10 @@ app.get('/api/orders', async (req, res) => {
  */
 app.put('/api/orders/:orderNumber/status', async (req, res) => {
     try {
-        const { orderNumber } = req.params;
+        const { orderId } = req.params;
         const { status } = req.body;
         
-        console.log(`📝 Updating order ${orderNumber} to status: ${status}`);
+        console.log(`📝 Updating order ${orderId} to status: ${status}`);
         
         const { data: updatedOrder, error: dbError } = await supabase
             .from('orders')
@@ -156,7 +156,7 @@ app.put('/api/orders/:orderNumber/status', async (req, res) => {
                 status: status,
                 updated_at: new Date().toISOString()
             })
-            .eq('order_number', orderNumber)
+            .eq('id', orderId)
             .select()
             .single();
         
@@ -170,7 +170,7 @@ app.put('/api/orders/:orderNumber/status', async (req, res) => {
         
         // Broadcast status change to all connected KDS displays
         io.emit('order_updated', {
-            orderNumber: orderNumber,
+            orderId: orderId,
             status: status,
             updatedAt: new Date().toISOString()
         });
