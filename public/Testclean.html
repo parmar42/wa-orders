@@ -1420,44 +1420,75 @@
             `;
         }).join('');
 
-        function attachButtonListeners() {
+        attachButtonListeners();
+        
+    }
+
+    function attachButtonListeners() {
         document.querySelectorAll('.btn-start').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.order-card');
-            const orderId = parseInt(card.dataset.orderId);
-            console.log('🟢 Start clicked for order:', orderId);
-            changeStatus(orderId, 'preparing');
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.order-card');
+                const orderId = parseInt(card.dataset.orderId);
+                console.log('🟢 Start clicked for order:', orderId);
+                changeStatus(orderId, 'preparing');
             });
         });
     
         document.querySelectorAll('.btn-ready').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.order-card');
-            const orderId = parseInt(card.dataset.orderId);
-            console.log('🟠 Ready clicked for order:', orderId);
-            changeStatus(orderId, 'ready');
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.order-card');
+                const orderId = parseInt(card.dataset.orderId);
+                console.log('🟠 Ready clicked for order:', orderId);
+                changeStatus(orderId, 'ready');
             });
         });
     
         document.querySelectorAll('.btn-complete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.order-card');
-            const orderId = parseInt(card.dataset.orderId);
-            console.log('🔵 Complete clicked for order:', orderId);
-            changeStatus(orderId, 'completed');
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.order-card');
+                const orderId = parseInt(card.dataset.orderId);
+                console.log('🔵 Complete clicked for order:', orderId);
+                changeStatus(orderId, 'completed');
             });
         });
     
         console.log('✅ Attached listeners to', 
-        document.querySelectorAll('.btn-start, .btn-ready, .btn-complete').length, 
-        'buttons');
+            document.querySelectorAll('.btn-start, .btn-ready, .btn-complete').length, 
+            'buttons');
+    }
+    
+    
+
+    function applyWeightedQueue(ordersArray) {
+        const locked = ordersArray.filter(o => o.locked);
+        const unlocked = ordersArray.filter(o => !o.locked);
+        
+        unlocked.sort((a, b) => {
+            const aUrgency = (a.timer / 60) / a.promiseTime;
+            const bUrgency = (b.timer / 60) / b.promiseTime;
+            return bUrgency - aUrgency;
+        });
+        
+        return [...locked, ...unlocked];
     }
 
-
+    function toggleItemComplete(orderId, itemIndex) {
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+            order.items[itemIndex].completed = !order.items[itemIndex].completed;
+            renderOrders();
+        }
     }
 
+    function filterOrders(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+        renderOrders();
+    }
 
-        // ============================================
+    // ============================================
     // FETCH ORDERS FROM SUPABASE
     // ============================================
 
