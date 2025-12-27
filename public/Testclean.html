@@ -1025,3 +1025,251 @@
     </div>
 
     <script>
+    // ============================================
+    // CONFIGURATION & STATE
+    // ============================================
+
+    const CONFIG = {
+        APPS_SCRIPT_URL: '',  // Not using
+        NODEJS_URL: 'https://wa-orders.onrender.com',
+        WHATSAPP_API: '',  // Not using
+    };
+
+    let orders = [];
+    let orderCounter = 23;
+    let currentFilter = 'all';
+    let completedToday = 0;
+
+    // Settings State
+    let settings = {
+        // Integration
+        appsScript: false,
+        nodejs: true,  // Must be ON for database persistence
+        
+        // Queue Management
+        weightedQueue: true,
+        remotePromiseTime: 20,
+        walkinExpectTime: 10,
+        gapThreshold: 2,
+        
+        // Anchoring
+        anchoring: true,
+        lockThreshold: 75,
+        
+        // Throttle
+        throttleWA: true,
+        notifyHost: true,
+        loadTrigger: 90,
+        delayPadding: 20,
+        
+        // Heat Map
+        weekendOffset: true,
+        weekendPadding: 8,
+        peakOffset: false,
+        
+        // Audio
+        alertNew: true,
+        alertOverdue: true,
+        alertLock: true,
+        alertLoad: true,
+        
+        // Display
+        cardWidth: 280,
+        autoRefresh: true
+    };
+
+    // Sample menu items
+    const menuItems = [
+        'Shrimp Fried Rice', 'Sweet & Sour Chicken', 'General Tso Chicken',
+        'Lo Mein', 'Sesame Chicken', 'Spring Rolls', 'Wonton Soup',
+        'Beef with Broccoli', 'Kung Pao Shrimp', 'Lemon Chicken'
+    ];
+
+    // ============================================
+    // CORE FUNCTIONS
+    // ============================================
+
+    function updateTime() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        const displayMinutes = minutes.toString().padStart(2, '0');
+        document.getElementById('currentTime').textContent = 
+            `${displayHours}:${displayMinutes} ${ampm}`;
+    }
+
+    function formatTimer(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function playSound(type) {
+        if (!settings[`alert${type.charAt(0).toUpperCase() + type.slice(1)}`]) return;
+        
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        const frequencies = {
+            new: 800,
+            overdue: 600,
+            lock: 1000,
+            load: 400
+        };
+        
+        oscillator.frequency.value = frequencies[type] || 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    }
+
+    function createTestOrder() {
+        const types = ['whatsapp', 'phone', 'walkin'];
+        const source = types[Math.floor(Math.random() * types.length)];
+        
+        const names = ['Kyle Johnson', 'Maria Garcia', 'James Wilson', 'Lisa Chen'];
+        const customer = names[Math.floor(Math.random() * names.length)];
+        const phone = '246-' + Math.floor(1000000 + Math.random() * 9000000);
+        
+        const numItems = Math.floor(Math.random() * 3) + 1;
+        const items = [];
+        
+        for (let i = 0; i < numItems; i++) {
+            const item = menuItems[Math.floor(Math.random() * menuItems.length)];
+            const qty = Math.floor(Math.random() * 2) + 1;
+            items.push({
+                name: item,
+                quantity: qty,
+                completed: false
+            });
+        }
+
+        const promiseTime = source === 'walkin' 
+            ? settings.walkinExpectTime 
+            : settings.remotePromiseTime;
+
+        const order = {
+            id: Date.now(),
+            number: orderCounter++,
+            source: source,
+            customer: customer,
+            phone: phone,
+            items: items,
+            status: 'new',
+            startTime: Date.now(),
+            promiseTime: promiseTime,
+            locked: false,
+            timer: 0,
+            orderNumber: 'EM' + orderCounter
+        };
+
+        orders.push(order);
+        playSound('new');
+        renderOrders();
+        updateLoadIndicator();
+    }
+
+    function updateTimers() {
+        const now = Date.now();
+        orders.forEach(order => {
+            order.timer = Math.floor((now - order.startTime) / 1000);
+            
+            // Check for locking
+            if (settings.anchoring && !order.locked && order.source !== 'walkin') {
+                const elapsed = order.timer / 60;
+                const lockTime = (order.promiseTime * settings.lockThreshold) / 100;
+                
+                if (elapsed >= lockTime) {
+                    order.locked = true;
+                    playSound('lock');
+                }
+            }
+            
+            // Check for overdue
+            if (order.timer / 60 > order.promiseTime && !order.alertedOverdue) {
+                order.alertedOverdue = true;
+                playSound('overdue');
+            }
+        });
+        renderOrders();
+    }
+
+    function updateLoadIndicator() {
+        const totalOrders = orders.length;
+        const loadPercentage = Math.min(100, (totalOrders / 10) * 100);
+        
+        document.getElementById('loadPercentage').textContent = Math.round(loadPercentage) + '%';
+        document.getElementById('loadBarFill').style.width = loadPercentage + '%';
+        document.getElementById('activeOrders').textContent = totalOrders;
+        
+        const loadEl = document.getElementById('loadPercentage');
+        loadEl.className = 'load-stat-value';
+        if (loadPercentage >= 80) loadEl.classList.add('high');
+        else if (loadPercentage >= 50) loadEl.classList.add('medium');
+        else loadEl.classList.add('low');
+        
+        // Calculate estimated wait time
+        const avgPrepTime = totalOrders > 0 ? 15 + (totalOrders * 2) : 0;
+        document.getElementById('estWait').textContent = avgPrepTime + ' min';
+        
+        // Check for throttle trigger
+        if (settings.throttleWA && loadPercentage >= settings.loadTrigger) {
+            throttleSystem();
+        }
+    }
+
+   /* function throttleSystem() {
+        console.log('🚨 Kitchen overloaded - Throttling promise times');
+        
+        if (settings.throttleWA) {
+            fetch(CONFIG.WHATSAPP_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update_promise_time',
+                    newTime: settings.remotePromiseTime + settings.delayPadding
+                })
+            }).catch(e => console.error('Throttle update failed:', e));
+        }
+        
+        playSound('load');
+    }
+    **/
+    // ============================================
+    // ORDER STATUS CHANGE - WITH DATABASE SYNC
+    // ============================================
+
+    async function changeStatus(orderId, newStatus) {
+    console.log('🔘 BUTTON CLICKED!');
+    console.log('Order ID:', orderId);
+    console.log('New Status:', newStatus);
+    console.log('Orders array:', orders);
+    
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        console.error('❌ Order not found! ID:', orderId);
+        console.log('Available order IDs:', orders.map(o => o.id));
+        return;
+    }
+    
+    console.log(`📝 Found order: ${order.orderNumber || order.number}`);
+    console.log(`   Current status: ${order.status}`);
+    console.log(`   Changing to: ${newStatus}`);
+    
+    order.status = newStatus;
+    
+
+    </script>
+</body>
+</html>
