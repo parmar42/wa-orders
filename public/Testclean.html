@@ -1269,7 +1269,190 @@
     
     order.status = newStatus;
     
+    // Update in Supabase
+    if (settings.nodejs && order.orderNumber) {
+        console.log('💾 Updating in Supabase...');
+        await updateOrderStatusInSupabase(order.orderNumber, newStatus);
+    }
+    
+    if (newStatus === 'completed') {
+        completedToday++;
+        
+        const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+        if (orderCard) {
+            orderCard.style.opacity = '0.5';
+            orderCard.style.transition = 'opacity 0.5s';
+        }
+        
+        setTimeout(() => {
+            orders = orders.filter(o => o.id !== orderId);
+            renderOrders();
+            updateLoadIndicator();
+        }, 2000);
+    } else {
+        console.log('🎨 Re-rendering orders...');
+        renderOrders();
+        updateLoadIndicator();
+    }
+    
+    console.log('✅ changeStatus complete!');
+    }
+    async function updateOrderStatusInSupabase(orderNumber, newStatus) {
+        try {
+            console.log(`🔄 Updating ${orderNumber} to ${newStatus} in Supabase...`);
+            
+            const response = await fetch(`${CONFIG.NODEJS_URL}/api/orders/${orderNumber}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            
+            if (response.ok) {
+                console.log(`✅ Order ${orderNumber} updated in Supabase`);
+            } else {
+                console.error(`❌ Failed to update ${orderNumber}:`, response.status);
+            }
+        } catch (error) {
+            console.error(`❌ Error updating ${orderNumber}:`, error.message);
+        }
+    }
 
+    // ============================================
+    // RENDER ORDERS
+    // ============================================
+
+    function renderOrders() {
+        const container = document.getElementById('ordersContainer');
+        let filteredOrders = orders;
+        
+        // Apply filters
+        if (currentFilter === 'new') {
+            filteredOrders = orders.filter(o => o.status === 'new');
+        } else if (currentFilter === 'preparing') {
+            filteredOrders = orders.filter(o => o.status === 'preparing');
+        } else if (currentFilter === 'ready') {
+            filteredOrders = orders.filter(o => o.status === 'ready');
+        } else if (['whatsapp', 'phone', 'walkin'].includes(currentFilter)) {
+            filteredOrders = orders.filter(o => o.source === currentFilter);
+        }
+        
+        // Apply weighted queueing sort
+        if (settings.weightedQueue) {
+            filteredOrders = applyWeightedQueue(filteredOrders);
+        } else {
+            filteredOrders.sort((a, b) => a.startTime - b.startTime);
+        }
+        
+        if (filteredOrders.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🍽️</div>
+                    <div>No orders to display</div>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = filteredOrders.map(order => {
+            const elapsed = order.timer / 60;
+            const isOverdue = elapsed > order.promiseTime;
+            const progress = (elapsed / order.promiseTime) * 100;
+            
+            let timerClass = 'normal';
+            if (progress >= 90) timerClass = 'critical';
+            else if (progress >= 75) timerClass = 'warning';
+            
+            let cardClasses = `order-card ${order.source} ${order.status}`;
+            if (order.locked) cardClasses += ' locked';
+            if (isOverdue) cardClasses += ' overdue';
+            
+            let actionButtons = '';
+            if (order.status === 'new') {
+                actionButtons = `<button class="action-btn btn-start" onclick="changeStatus(${order.id}, 'preparing')">Start Cooking</button>`;
+            } else if (order.status === 'preparing') {
+                actionButtons = `<button class="action-btn btn-ready" onclick="changeStatus(${order.id}, 'ready')">Mark Ready</button>`;
+            } else if (order.status === 'ready') {
+                actionButtons = `<button class="action-btn btn-complete" onclick="changeStatus(${order.id}, 'completed')">Complete</button>`;
+            }
+            
+            return `
+                <div class="${cardClasses}" data-order-id="${order.id}">
+                    <div class="order-header">
+                        <div class="order-number-section">
+                            <div class="order-number">
+                                #${order.number}
+                                ${order.locked ? '<span class="lock-badge">🔒 LOCKED</span>' : ''}
+                            </div>
+                            <div class="order-source">
+                                ${order.source === 'whatsapp' ? '💬' : order.source === 'phone' ? '📞' : '🚶'} ${order.source.toUpperCase()}
+                            </div>
+                        </div>
+                        <div class="timer-section">
+                            <div class="timer ${timerClass}">${formatTimer(order.timer)}</div>
+                            <div class="promise-time">Promise: ${order.promiseTime} min</div>
+                        </div>
+                    </div>
+                    
+                    <div class="customer-info">
+                        <div class="customer-name">👤 ${order.customer}</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">${order.phone}</div>
+                    </div>
+                    
+                    <div class="order-items">
+                        ${order.items.map((item, idx) => `
+                            <div class="order-item">
+                                <div class="item-header">
+                                    <div class="item-check ${item.completed ? '' : 'pending'}" 
+                                        onclick="toggleItemComplete(${order.id}, ${idx})">
+                                        ${item.completed ? '✓' : '○'}
+                                    </div>
+                                    <div class="item-name">${item.name}</div>
+                                    <div class="item-quantity">${item.quantity}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="order-actions">
+                        ${actionButtons}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function applyWeightedQueue(ordersArray) {
+        const locked = ordersArray.filter(o => o.locked);
+        const unlocked = ordersArray.filter(o => !o.locked);
+        
+        unlocked.sort((a, b) => {
+            const aUrgency = (a.timer / 60) / a.promiseTime;
+            const bUrgency = (b.timer / 60) / b.promiseTime;
+            return bUrgency - aUrgency;
+        });
+        
+        return [...locked, ...unlocked];
+    }
+
+    function toggleItemComplete(orderId, itemIndex) {
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+            order.items[itemIndex].completed = !order.items[itemIndex].completed;
+            renderOrders();
+        }
+    }
+
+    function filterOrders(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+        renderOrders();
+    }
+
+    
+
+    console.log('🍜 Tap+Serve KDS Initialized');
     </script>
 </body>
 </html>
