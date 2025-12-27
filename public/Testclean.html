@@ -1819,48 +1819,7 @@
         }
 
     
-    // Listen for order status updates from other KDS displays
-    socket.on('order_updated', (updateData) => {
-        console.log('📡 Order status update received:', updateData);
         
-        try {
-            // Find the order in our local array
-            const order = orders.find(o => o.id === updateData.orderId);
-            
-            if (order) {
-                console.log(`🔄 Updating ${order.orderNumber} from ${order.status} to ${updateData.status}`);
-                
-                // Update the status
-                order.status = updateData.status;
-                
-                // If completed, remove it after delay
-                if (updateData.status === 'completed') {
-                    const orderCard = document.querySelector(`[data-order-id="${order.id}"]`);
-                    if (orderCard) {
-                        orderCard.style.opacity = '0.5';
-                        orderCard.style.transition = 'opacity 0.5s';
-                    }
-                    
-                    setTimeout(() => {
-                        orders = orders.filter(o => o.id !== order.id);
-                        renderOrders();
-                        updateLoadIndicator();
-                    }, 2000);
-                } else {
-                    // Just re-render for other status changes
-                    renderOrders();
-                    updateLoadIndicator();
-                }
-                
-                console.log('✅ Local display updated');
-            } else {
-                console.log('⚠️ Order not found in local array');
-            }
-            
-        } catch (error) {
-            console.error('❌ Error processing status update:', error);
-        }
-    });    
         
 
     });
