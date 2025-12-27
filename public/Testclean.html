@@ -1644,7 +1644,105 @@
         resetToDefaults();
     }
 
-    
+    // ============================================
+    // SOCKET.IO CONNECTION
+    // ============================================
+
+    const socket = io(CONFIG.NODEJS_URL, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5
+    });
+
+    socket.on('connect', () => {
+        const statusDot = document.getElementById('connection-status');
+        if (statusDot) {
+            statusDot.style.background = '#4caf50';
+            statusDot.title = 'Connected to Server';
+        }
+        console.log('✅ Socket Connected:', socket.id);
+        
+        // Fetch orders from database on connect
+        fetchOrdersFromSupabase();
+    });
+
+    socket.on('disconnect', () => {
+        const statusDot = document.getElementById('connection-status');
+        if (statusDot) {
+            statusDot.style.background = '#ff4b2b';
+            statusDot.title = 'Disconnected - Check Internet';
+        }
+        console.log('🔴 Socket Disconnected');
+    });
+
+    socket.on('connect_error', (error) => {
+        console.error('❌ Socket Connection Error:', error.message);
+    });
+
+    // Listen for new orders (Tap+Serve format)
+    socket.on('new_order', (receivedData) => {
+        console.log('🎯 NEW ORDER EVENT:', receivedData);
+        
+        try {
+            const orderData = Array.isArray(receivedData) ? receivedData[0] : receivedData;
+            
+            let itemsArray = [];
+            if (orderData.items && Array.isArray(orderData.items)) {
+                itemsArray = orderData.items.map(item => ({
+                    name: item.name || 'Unknown Item',
+                    quantity: item.quantity || 1,
+                    completed: false
+                }));
+            }
+            
+            const newOrder = {
+                id: orderData.id || Date.now(),
+                number: orderData.orderNumber ? parseInt(orderData.orderNumber.replace(/\D/g, '')) : orderCounter++,
+                source: orderData.source || 'phone',
+                customer: orderData.customer || orderData.customerName || 'Guest',
+                phone: orderData.phone || orderData.phoneNumber || '',
+                items: itemsArray,
+                status: 'new',
+                startTime: Date.now(),
+                promiseTime: orderData.promiseTime || 20,
+                locked: false,
+                timer: 0,
+                orderNumber: orderData.orderNumber || 'EM' + Date.now()
+            };
+            
+            // Check if order already exists
+            const existingIndex = orders.findIndex(o => o.orderNumber === newOrder.orderNumber);
+            if (existingIndex === -1) {
+                console.log('📊 Adding order:', newOrder.orderNumber);
+                orders.push(newOrder);
+                playSound('new');
+                renderOrders();
+                updateLoadIndicator();
+                console.log('✅ Order added! Total:', orders.length);
+            } else {
+                console.log('⚠️ Order already exists');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error processing order:', error);
+        }
+    });
+
+ 
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+
+    loadSettings();
+    updateTime();
+    setInterval(updateTime, 1000);
+    setInterval(() => {
+        if (settings.autoRefresh) {
+            updateTimers();
+        }
+    }, 1000);
 
     console.log('🍜 Tap+Serve KDS Initialized');
     </script>
