@@ -1450,6 +1450,200 @@
         renderOrders();
     }
 
+    // ============================================
+    // FETCH ORDERS FROM SUPABASE
+    // ============================================
+
+    async function fetchOrdersFromSupabase() {
+        if (!settings.nodejs) {
+            console.log('⚠️ Node.js integration disabled');
+            return;
+        }
+        
+        try {
+            console.log('🔄 Fetching orders from Supabase...');
+            
+            const response = await fetch(`${CONFIG.NODEJS_URL}/api/orders?status=new,preparing,ready&limit=50`);
+            
+            if (!response.ok) {
+                console.error(`❌ HTTP Error: ${response.status}`);
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.orders) {
+                console.log(`✅ Loaded ${data.orders.length} orders from database`);
+                
+                const fetchedOrders = data.orders.map(dbOrder => {
+                    let items = [];
+                    
+                    if (typeof dbOrder.order_items === 'string') {
+                        try {
+                            items = JSON.parse(dbOrder.order_items);
+                        } catch (e) {
+                            items = [{name: dbOrder.order_items, quantity: 1, completed: false}];
+                        }
+                    } else {
+                        items = dbOrder.order_items || [];
+                    }
+                    
+                    items = items.map(item => ({
+                        name: item.name || 'Unknown',
+                        quantity: item.quantity || 1,
+                        completed: item.completed || false
+                    }));
+                    
+                    return {
+                        id: dbOrder.id,
+                        number: parseInt((dbOrder.order_number || '0').replace(/\D/g, '')) || Date.now(),
+                        source: dbOrder.order_source || 'phone',
+                        customer: dbOrder.customer_name || 'Unknown',
+                        phone: dbOrder.phone_number || '',
+                        items: items,
+                        status: dbOrder.status || 'new',
+                        startTime: new Date(dbOrder.created_at).getTime(),
+                        promiseTime: dbOrder.promise_time || 20,
+                        locked: dbOrder.locked || false,
+                        timer: Math.floor((Date.now() - new Date(dbOrder.created_at).getTime()) / 1000),
+                        orderNumber: dbOrder.order_number
+                    };
+                });
+                
+                orders = fetchedOrders;
+                
+                console.log(`🎨 Rendering ${orders.length} orders`);
+                renderOrders();
+                updateLoadIndicator();
+                
+            } else {
+                console.log('⚠️ No orders returned from database');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to fetch orders:', error.message);
+        }
+    }
+
+    // ============================================
+    // SETTINGS FUNCTIONS
+    // ============================================
+
+    function showSettings() {
+        loadSettingsUI();
+        document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettings() {
+        saveSettings();
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function toggleSetting(key) {
+        settings[key] = !settings[key];
+        const toggle = document.getElementById(`toggle-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+        if (toggle) {
+            toggle.classList.toggle('active', settings[key]);
+        }
+        saveSettings();
+    }
+
+    function loadSettingsUI() {
+        Object.keys(settings).forEach(key => {
+            const toggle = document.getElementById(`toggle-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+            if (toggle && typeof settings[key] === 'boolean') {
+                toggle.classList.toggle('active', settings[key]);
+            }
+        });
+        
+        document.getElementById('remote-promise-time').value = settings.remotePromiseTime;
+        document.getElementById('walkin-expect-time').value = settings.walkinExpectTime;
+        document.getElementById('gap-threshold').value = settings.gapThreshold;
+        document.getElementById('lock-threshold').value = settings.lockThreshold;
+        document.getElementById('load-trigger').value = settings.loadTrigger;
+        document.getElementById('delay-padding').value = settings.delayPadding;
+        document.getElementById('weekend-padding').value = settings.weekendPadding;
+        document.getElementById('card-width').value = settings.cardWidth;
+    }
+
+    function saveSettings() {
+        settings.remotePromiseTime = parseInt(document.getElementById('remote-promise-time').value);
+        settings.walkinExpectTime = parseInt(document.getElementById('walkin-expect-time').value);
+        settings.gapThreshold = parseInt(document.getElementById('gap-threshold').value);
+        settings.lockThreshold = parseInt(document.getElementById('lock-threshold').value);
+        settings.loadTrigger = parseInt(document.getElementById('load-trigger').value);
+        settings.delayPadding = parseInt(document.getElementById('delay-padding').value);
+        settings.weekendPadding = parseInt(document.getElementById('weekend-padding').value);
+        settings.cardWidth = parseInt(document.getElementById('card-width').value);
+        
+        localStorage.setItem('kds_settings', JSON.stringify(settings));
+        console.log('✅ Settings saved');
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('kds_settings');
+        if (saved) {
+            settings = { ...settings, ...JSON.parse(saved) };
+        }
+    }
+
+    function updateCardWidth() {
+        settings.cardWidth = parseInt(document.getElementById('card-width').value);
+        
+        const style = document.createElement('style');
+        style.id = 'dynamic-card-width';
+        const existingStyle = document.getElementById('dynamic-card-width');
+        if (existingStyle) existingStyle.remove();
+        
+        style.innerHTML = `
+            .order-card {
+                min-width: ${settings.cardWidth}px !important;
+                max-width: ${settings.cardWidth}px !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function resetToDefaults() {
+        if (confirm('Reset all settings to defaults?')) {
+            localStorage.removeItem('kds_settings');
+            location.reload();
+        }
+    }
+
+    function clearAllOrders() {
+        if (confirm('Clear all orders? This will NOT delete from database.')) {
+            orders = [];
+            renderOrders();
+            updateLoadIndicator();
+        }
+    }
+
+    function refreshOrders() {
+        console.log('🔄 Manual refresh');
+        fetchOrdersFromSupabase();
+    }
+
+    function showSearch() {
+        alert('Search functionality - Coming soon!');
+    }
+
+    function showHistory() {
+        alert('Order history - Coming soon!');
+    }
+
+    function exportGapReport() {
+        alert('Gap Report export - Coming soon!');
+    }
+
+    function addTestOrder() {
+        createTestOrder();
+    }
+
+    function resetSettings() {
+        resetToDefaults();
+    }
+
     
 
     console.log('🍜 Tap+Serve KDS Initialized');
