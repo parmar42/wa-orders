@@ -143,7 +143,7 @@ app.get('/api/orders', async (req, res) => {
  * UPDATE ORDER STATUS
  * PUT /api/orders/:orderNumber/status
  */
-app.put('/api/orders/:orderNumber/status', async (req, res) => {
+app.put('/api/orders/:orderId/status', async (req, res) => {
     try {
         const { orderId } = req.params;
         const { status } = req.body;
