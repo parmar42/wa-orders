@@ -1729,7 +1729,49 @@
         }
     });
 
- 
+    // Listen for legacy format
+    socket.on('new-kds-order', (data) => {
+        console.log('📥 LEGACY ORDER:', data);
+        
+        try {
+            const formattedItems = (data.orderItems || []).map(item => ({
+                name: item.name || item,
+                quantity: item.quantity || 1,
+                completed: false
+            }));
+
+            const promiseTime = data.orderType === 'Walk-In' 
+                ? settings.walkinExpectTime 
+                : settings.remotePromiseTime;
+
+            const newOrder = {
+                id: Date.now(),
+                number: data.orderNumber ? parseInt(data.orderNumber.replace(/\D/g, '')) : orderCounter++,
+                source: data.orderType ? data.orderType.toLowerCase().replace(' ', '') : 'phone',
+                customer: data.customerName || 'Guest',
+                phone: data.phoneNumber || '',
+                items: formattedItems,
+                status: 'new',
+                startTime: Date.now(),
+                promiseTime: promiseTime,
+                locked: false,
+                timer: 0,
+                orderNumber: data.orderNumber
+            };
+
+            const existingIndex = orders.findIndex(o => o.orderNumber === newOrder.orderNumber);
+            if (existingIndex === -1) {
+                orders.push(newOrder);
+                playSound('new');
+                renderOrders();
+                updateLoadIndicator();
+                console.log('✅ Legacy order added!');
+            }
+            
+        } catch (error) {
+            console.error('❌ Legacy order error:', error);
+        }
+    });
 
     // ============================================
     // INITIALIZATION
