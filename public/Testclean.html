@@ -1270,7 +1270,7 @@
     order.status = newStatus;
     
     // Update in Supabase
-    if (settings.nodejs && order.orderNumber) {
+    if (settings.nodejs && order.orderId) {
         console.log('💾 Updating in Supabase...');
          await updateOrderStatusInSupabase(order.id, newStatus);  // ← Use UUID instead
     }
