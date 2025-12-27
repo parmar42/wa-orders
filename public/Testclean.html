@@ -1250,43 +1250,53 @@
     // ============================================
 
     async function changeStatus(orderId, newStatus) {
-        const order = orders.find(o => o.id === orderId);
-        if (!order) return;
+    console.log('🔘 BUTTON CLICKED!');
+    console.log('Order ID:', orderId);
+    console.log('New Status:', newStatus);
+    console.log('Orders array:', orders);
+    
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        console.error('❌ Order not found! ID:', orderId);
+        console.log('Available order IDs:', orders.map(o => o.id));
+        return;
+    }
+    
+    console.log(`📝 Found order: ${order.orderNumber || order.number}`);
+    console.log(`   Current status: ${order.status}`);
+    console.log(`   Changing to: ${newStatus}`);
+    
+    order.status = newStatus;
+    
+    // Update in Supabase
+    if (settings.nodejs && order.orderNumber) {
+        console.log('💾 Updating in Supabase...');
+        await updateOrderStatusInSupabase(order.orderNumber, newStatus);
+    }
+    
+    if (newStatus === 'completed') {
+        completedToday++;
         
-        console.log(`📝 Changing order ${order.orderNumber || order.number} from ${order.status} to ${newStatus}`);
-        
-        const oldStatus = order.status;
-        order.status = newStatus;
-        
-        // Update in Supabase immediately
-        if (settings.nodejs && order.orderNumber) {
-            await updateOrderStatusInSupabase(order.orderNumber, newStatus);
+        const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+        if (orderCard) {
+            orderCard.style.opacity = '0.5';
+            orderCard.style.transition = 'opacity 0.5s';
         }
         
-        if (newStatus === 'completed') {
-            completedToday++;
-            
-            // Fade out animation
-            const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
-            if (orderCard) {
-                orderCard.style.opacity = '0.5';
-                orderCard.style.transition = 'opacity 0.5s';
-            }
-            
-            // Remove after 2 seconds
-            setTimeout(() => {
-                orders = orders.filter(o => o.id !== orderId);
-                renderOrders();
-                updateLoadIndicator();
-            }, 2000);
-        } else {
-            // Just re-render for non-completed status changes
+        setTimeout(() => {
+            orders = orders.filter(o => o.id !== orderId);
             renderOrders();
-        }
-        
+            updateLoadIndicator();
+        }, 2000);
+    } else {
+        console.log('🎨 Re-rendering orders...');
+        renderOrders();
         updateLoadIndicator();
     }
-
+    
+    console.log('✅ changeStatus complete!');
+    }
     async function updateOrderStatusInSupabase(orderNumber, newStatus) {
         try {
             console.log(`🔄 Updating ${orderNumber} to ${newStatus} in Supabase...`);
