@@ -1428,7 +1428,7 @@
         document.querySelectorAll('.btn-start').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const card = e.target.closest('.order-card');
-                const orderId = parseInt(card.dataset.orderId);
+                const orderId = card.dataset.orderId;
                 console.log('🟢 Start clicked for order:', orderId);
                 changeStatus(orderId, 'preparing');
             });
@@ -1437,7 +1437,7 @@
         document.querySelectorAll('.btn-ready').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const card = e.target.closest('.order-card');
-                const orderId = parseInt(card.dataset.orderId);
+                const orderId = card.dataset.orderId;
                 console.log('🟠 Ready clicked for order:', orderId);
                 changeStatus(orderId, 'ready');
             });
@@ -1446,7 +1446,7 @@
         document.querySelectorAll('.btn-complete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const card = e.target.closest('.order-card');
-                const orderId = parseInt(card.dataset.orderId);
+                const orderId = card.dataset.orderId;
                 console.log('🔵 Complete clicked for order:', orderId);
                 changeStatus(orderId, 'completed');
             });
