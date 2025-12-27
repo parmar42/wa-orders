@@ -1303,7 +1303,7 @@
     }
     async function updateOrderStatusInSupabase(orderId, newStatus) {
         try {
-            console.log(`🔄 Updating ${orderNumber} to ${newStatus} in Supabase...`);
+            console.log(`🔄 Updating ${orderId} to ${newStatus} in Supabase...`);
             
             const response = await fetch(`${CONFIG.NODEJS_URL}/api/orders/${orderId}/status`, {
                 method: 'PUT',
@@ -1312,12 +1312,12 @@
             });
             
             if (response.ok) {
-                console.log(`✅ Order ${orderNumber} updated in Supabase`);
+                console.log(`✅ Order ${orderId} updated in Supabase`);
             } else {
-                console.error(`❌ Failed to update ${orderNumber}:`, response.status);
+                console.error(`❌ Failed to update ${orderId}:`, response.status);
             }
         } catch (error) {
-            console.error(`❌ Error updating ${orderNumber}:`, error.message);
+            console.error(`❌ Error updating ${orderId}:`, error.message);
         }
     }
 
