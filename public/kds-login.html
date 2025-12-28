@@ -511,14 +511,17 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('✅ Already authenticated - redirecting...');
         window.location.replace(CONFIG.REDIRECT_URL);
     } else {
-        setTimeout(() => {
-            const input = document.getElementById('loginPassword');
-            if (input) {
-                input.focus();
-                window.scrollTo(0, 0);
-            }
-        }, 300);
+        // Don't auto-focus on mobile - wait for user tap
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         
+        if (!isMobile) {
+            // Only auto-focus on desktop
+            setTimeout(() => {
+                document.getElementById('loginPassword')?.focus();
+            }, 300);
+        }
+        
+        window.scrollTo(0, 0);
         console.log('🔒 Please login');
     }
 });
