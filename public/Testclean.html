@@ -213,8 +213,8 @@
 
         /* Order Card */
         .order-card {
-            min-width: 280px;
-            max-width: 280px;
+            min-width: 290px;
+            max-width: 290px;
             background: #fff;
             border-radius: 12px;
             overflow: hidden;
@@ -1405,9 +1405,10 @@
                         ${order.items.map((item, idx) => `
                             <div class="order-item">
                                 <div class="item-header">
-                                    <div class="item-check ${item.completed ? '' : 'pending'}" 
-                                        onclick="toggleItemComplete(${order.id}, ${idx})">
-                                        ${item.completed ? '✓' : '○'}
+                                   <div class="item-check ${item.completed ? '' : 'pending'}" 
+                                    data-order-id="${order.id}" 
+                                    data-item-index="${idx}">
+                                    ${item.completed ? '✓' : '○'}
                                     </div>
                                     <div class="item-name">${item.name}</div>
                                     <div class="item-quantity">${item.quantity}</div>
