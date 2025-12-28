@@ -1456,6 +1456,26 @@
             });
         });
     
+
+        // ADD THIS: Item checkboxes
+        document.querySelectorAll('.item-check').forEach(checkbox => {
+            checkbox.addEventListener('click', (e) => {
+                const orderId = e.target.dataset.orderId;
+                const itemIndex = parseInt(e.target.dataset.itemIndex);
+                
+                console.log('📋 Item toggled:', orderId, itemIndex);
+                toggleItemComplete(orderId, itemIndex);
+            });
+        });
+        
+        console.log('✅ Attached listeners to', 
+            document.querySelectorAll('.btn-start, .btn-ready, .btn-complete').length, 
+            'buttons and',
+            document.querySelectorAll('.item-check').length,
+            'checkboxes');
+
+            
+
         console.log('✅ Attached listeners to', 
             document.querySelectorAll('.btn-start, .btn-ready, .btn-complete').length, 
             'buttons');
