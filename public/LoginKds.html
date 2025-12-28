@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KDS Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+        }
+
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999999;
+        }
+
+        .login-overlay.hidden {
+            display: none;
+        }
+
+        .login-container {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .login-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: #999;
+            margin: 0 0 40px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .login-input-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 12px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .login-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-error {
+            margin-top: 20px;
+            padding: 15px;
+            background: #ffebee;
+            color: #c62828;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        /* Success screen */
+        .success-screen {
+            display: none;
+            text-align: center;
+            color: white;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000000;
+        }
+
+        .success-screen.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .success-text {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-overlay">
+    <div class="login-container" id="loginContainer">
+        <div class="login-logo">🍜</div>
+        <h1 class="login-title">Tap+Serve KDS</h1>
+        <p class="login-subtitle">Kitchen Display System</p>
+        
+        <div class="login-input-wrapper">
+            <input 
+                type="password" 
+                id="loginPassword" 
+                class="login-input"
+                placeholder="••••"
+                maxlength="6"
+                autocomplete="off"
+                inputmode="numeric"
+            />
+        </div>
+        
+        <button id="loginButton" class="login-button">
+            Login
+        </button>
+        
+        <div id="loginError" class="login-error">
+            ❌ Invalid PIN. Please try again.
+        </div>
+    </div>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div id="successScreen" class="success-screen">
+    <div class="success-icon">✅</div>
+    <div class="success-text">Login Successful!</div>
+</div>
+
+<script>
+// ============================================
+// CONFIGURATION
+// ============================================
+
+const CONFIG = {
+    CORRECT_PIN: '1234',  // ← CHANGE THIS TO YOUR PIN
+    SESSION_HOURS: 8,
+    REDIRECT_URL: 'your-kds-file.html'  // ← CHANGE TO YOUR KDS FILE NAME
+};
+
+const SESSION_DURATION = CONFIG.SESSION_HOURS * 60 * 60 * 1000;
+
+// ============================================
+// AUTH FUNCTIONS
+// ============================================
+
+function checkAuth() {
+    const authData = localStorage.getItem('kds_auth');
+    
+    if (!authData) {
+        return false;
+    }
+    
+    try {
+        const parsed = JSON.parse(authData);
+        const now = Date.now();
+        
+        // Check if session expired
+        if (now - parsed.timestamp > SESSION_DURATION) {
+            localStorage.removeItem('kds_auth');
+            return false;
+        }
+        
+        return parsed.authenticated === true;
+    } catch (e) {
+        localStorage.removeItem('kds_auth');
+        return false;
+    }
+}
+
+function handleLogin() {
+    const inputPin = document.getElementById('loginPassword').value.trim();
+    const errorDiv = document.getElementById('loginError');
+    const container = document.getElementById('loginContainer');
+    
+    if (inputPin === CONFIG.CORRECT_PIN) {
+        // ✅ CORRECT PIN
+        const loginData = {
+            authenticated: true,
+            timestamp: Date.now(),
+            user: 'Kitchen Staff'
+        };
+        
+        localStorage.setItem('kds_auth', JSON.stringify(loginData));
+        
+        // Hide error
+        errorDiv.classList.remove('show');
+        
+        // Show success
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('successScreen').classList.add('show');
+        
+        console.log('✅ Login successful');
+        
+        // Redirect to KDS after 1 second
+        setTimeout(() => {
+            window.location.href = CONFIG.REDIRECT_URL;
+        }, 1000);
+        
+    } else {
+        // ❌ WRONG PIN
+        errorDiv.classList.add('show');
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginPassword').focus();
+        
+        // Shake animation
+        container.classList.add('shake');
+        setTimeout(() => {
+            container.classList.remove('shake');
+        }, 500);
+        
+        console.log('❌ Invalid PIN');
+    }
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+document.getElementById('loginButton').addEventListener('click', handleLogin);
+
+document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        handleLogin();
+    }
+});
+
+// Focus input on load
+window.addEventListener('DOMContentLoaded', () => {
+    // If already authenticated, redirect immediately
+    if (checkAuth()) {
+        console.log('✅ Already authenticated - redirecting...');
+        window.location.href = CONFIG.REDIRECT_URL;
+    } else {
+        // Not authenticated - show login
+        setTimeout(() => {
+            document.getElementById('loginPassword').focus();
+        }, 300);
+    }
+});
+
+console.log('🔐 Login system ready');
+</script>
+
+</body>
+</html>
