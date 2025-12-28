@@ -1915,6 +1915,16 @@
     });  // ← Close order_updated handler HERE
 
     // ============================================
+    // LOGOUT FUNCTION  
+    
+    function logout() {
+        if (confirm('Are you sure you want to logout?')) {
+            localStorage.removeItem('kds_auth');
+            window.location.replace('kds-login.html');
+        }
+    }
+
+    // ============================================
     // INITIALIZATION
     // ============================================
 
