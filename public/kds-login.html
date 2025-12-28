@@ -8,7 +8,7 @@
     <title>KDS Login</title>
     <style>
         /* ============================================
-           MOBILE-OPTIMIZED LOGIN SYSTEM
+           RESET & BASE
            ============================================ */
         
         html {
@@ -25,39 +25,47 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-            height: 100%;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
-            width: 100%;
-            position: fixed;
-            margin: 0;
-            padding: 0;
+            overflow: hidden !important;
+            height: 100% !important;
+            min-height: 100vh !important;
+            min-height: -webkit-fill-available !important;
+            width: 100% !important;
+            position: fixed !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
+        /* ============================================
+           LOGIN OVERLAY - FORCED POSITIONING
+           ============================================ */
+
         .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999999;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            min-height: 100vh !important;
+            min-height: -webkit-fill-available !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 999999 !important;
+            overflow: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
         }
 
         .login-overlay.hidden {
-            display: none;
+            display: none !important;
         }
+
+        /* ============================================
+           LOGIN CONTAINER
+           ============================================ */
 
         .login-container {
             background: white;
@@ -111,7 +119,9 @@
             outline: none;
             transition: all 0.3s;
             -webkit-appearance: none;
+            -moz-appearance: none;
             appearance: none;
+            -webkit-text-security: disc;
         }
 
         .login-input:focus {
@@ -157,15 +167,19 @@
             animation: slideDown 0.3s;
         }
 
+        /* ============================================
+           SUCCESS SCREEN
+           ============================================ */
+
         .success-screen {
             display: none;
             text-align: center;
             color: white;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000000;
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 1000000 !important;
         }
 
         .success-screen.show {
@@ -183,7 +197,10 @@
             font-weight: 600;
         }
 
-        /* Animations */
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -210,7 +227,10 @@
             animation: shake 0.5s;
         }
 
-        /* Mobile specific adjustments */
+        /* ============================================
+           MOBILE RESPONSIVE
+           ============================================ */
+
         @media (max-height: 600px) {
             .login-logo {
                 font-size: 48px;
@@ -276,7 +296,6 @@
             }
         }
 
-        /* Landscape mode on small screens */
         @media (max-height: 500px) and (orientation: landscape) {
             .login-container {
                 max-height: 90vh;
@@ -310,11 +329,11 @@
         /* iOS specific fixes */
         @supports (-webkit-touch-callout: none) {
             .login-overlay {
-                min-height: -webkit-fill-available;
+                min-height: -webkit-fill-available !important;
             }
             
             body {
-                min-height: -webkit-fill-available;
+                min-height: -webkit-fill-available !important;
             }
         }
     </style>
@@ -324,7 +343,7 @@
 <!-- LOGIN SCREEN -->
 <div id="loginScreen" class="login-overlay">
     <div class="login-container" id="loginContainer">
-        <h1 class="login-title"><img src= "https://raw.githubusercontent.com/parmar42/images/main/square-mouse-pointer%20(3).png" alt="logo">
+        <img src= "https://raw.githubusercontent.com/parmar42/images/main/square-mouse-pointer%20(3).png" alt="logo">
         <span style="font-size: 20px; font-weight: bolder; color:#08850e;">tap+serve</span></h1>
         <p class="login-subtitle">Kitchen Display System</p>
         
@@ -353,8 +372,7 @@
 
 <!-- SUCCESS SCREEN -->
 <div id="successScreen" class="success-screen">
-    <div class="success-icon"><img src="https://raw.githubusercontent.com/parmar42/images/main/assets/checkMark.png" alt="confirmed">
-    </div>
+    <div class="success-icon">✅</div>
     <div class="success-text">Login Successful!</div>
 </div>
 
@@ -386,7 +404,6 @@ function checkAuth() {
         const parsed = JSON.parse(authData);
         const now = Date.now();
         
-        // Check if session expired
         if (now - parsed.timestamp > SESSION_DURATION) {
             localStorage.removeItem('kds_auth');
             return false;
@@ -414,16 +431,13 @@ function handleLogin() {
         
         localStorage.setItem('kds_auth', JSON.stringify(loginData));
         
-        // Hide error
         errorDiv.classList.remove('show');
         
-        // Show success
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('successScreen').classList.add('show');
         
         console.log('✅ Login successful');
         
-        // Redirect to KDS after 1 second
         setTimeout(() => {
             window.location.href = CONFIG.REDIRECT_URL;
         }, 1000);
@@ -434,7 +448,6 @@ function handleLogin() {
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginPassword').focus();
         
-        // Shake animation
         container.classList.add('shake');
         setTimeout(() => {
             container.classList.remove('shake');
@@ -443,36 +456,6 @@ function handleLogin() {
         console.log('❌ Invalid PIN');
     }
 }
-
-// ============================================
-// MOBILE OPTIMIZATIONS
-// ============================================
-
-// Prevent zoom on input focus (iOS)
-document.addEventListener('touchstart', function() {}, {passive: true});
-
-// Lock viewport on mobile
-function lockViewport() {
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-}
-
-function unlockViewport() {
-    document.body.style.position = '';
-    document.body.style.width = '';
-}
-
-// Handle virtual keyboard appearance on mobile
-let initialHeight = window.innerHeight;
-
-window.addEventListener('resize', () => {
-    // If keyboard appears (viewport shrinks)
-    if (window.innerHeight < initialHeight * 0.75) {
-        document.getElementById('loginContainer').style.transform = 'translateY(-20%)';
-    } else {
-        document.getElementById('loginContainer').style.transform = '';
-    }
-});
 
 // ============================================
 // EVENT LISTENERS
@@ -490,17 +473,32 @@ document.getElementById('loginPassword').addEventListener('keypress', (e) => {
     }
 });
 
-// Auto-format PIN display (add dots as you type)
+// Only allow numbers
 document.getElementById('loginPassword').addEventListener('input', (e) => {
     const value = e.target.value;
-    // Only allow numbers
     e.target.value = value.replace(/[^0-9]/g, '');
 });
 
-// Prevent form submission on Enter
 document.getElementById('loginPassword').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
+    }
+});
+
+// ============================================
+// MOBILE OPTIMIZATIONS
+// ============================================
+
+document.addEventListener('touchstart', function() {}, {passive: true});
+
+// Handle keyboard on mobile
+let initialHeight = window.innerHeight;
+
+window.addEventListener('resize', () => {
+    if (window.innerHeight < initialHeight * 0.75) {
+        document.getElementById('loginContainer').style.transform = 'translateY(-10%)';
+    } else {
+        document.getElementById('loginContainer').style.transform = '';
     }
 });
 
@@ -509,20 +507,14 @@ document.getElementById('loginPassword').addEventListener('keydown', (e) => {
 // ============================================
 
 window.addEventListener('DOMContentLoaded', () => {
-    // If already authenticated, redirect immediately
     if (checkAuth()) {
         console.log('✅ Already authenticated - redirecting...');
         window.location.replace(CONFIG.REDIRECT_URL);
     } else {
-        // Not authenticated - show login
-        lockViewport();
-        
         setTimeout(() => {
             const input = document.getElementById('loginPassword');
             if (input) {
                 input.focus();
-                
-                // Scroll to top on mobile to ensure visibility
                 window.scrollTo(0, 0);
             }
         }, 300);
@@ -531,18 +523,25 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Prevent back button from leaving login page when not authenticated
+// Prevent back button
 window.addEventListener('popstate', (e) => {
     if (!checkAuth()) {
         window.history.pushState(null, '', window.location.href);
     }
 });
 
-// Push initial state
 window.history.pushState(null, '', window.location.href);
 
-console.log('🔐 Mobile-optimized login system ready');
+console.log('🔐 Login system ready');
 </script>
 
 </body>
 </html>
+
+
+
+
+
+
+
+        
