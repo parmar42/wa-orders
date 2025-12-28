@@ -191,7 +191,8 @@
 <div id="loginScreen" class="login-overlay">
     <div class="login-container" id="loginContainer">
         <div class="login-logo">🍜</div>
-        <h1 class="login-title">Tap+Serve KDS</h1>
+        <h1 class="login-title"><span><img src= "https://raw.githubusercontent.com/parmar42/images/main/square-mouse-pointer%20(3).png" alt="logo">
+                </span><span style="font-size: 20px; font-weight: bolder; color:#08850e;">tap+serve</span> </h1></h1>
         <p class="login-subtitle">Kitchen Display System</p>
         
         <div class="login-input-wrapper">
@@ -222,120 +223,120 @@
     <div class="success-text">Login Successful!</div>
 </div>
 
-<script>
-// ============================================
-// CONFIGURATION
-// ============================================
+    <script>
+    // ============================================
+    // CONFIGURATION
+    // ============================================
 
-const CONFIG = {
-    CORRECT_PIN: '1234',  // ← CHANGE THIS TO YOUR PIN
-    SESSION_HOURS: 8,
-    REDIRECT_URL: 'your-kds-file.html'  // ← CHANGE TO YOUR KDS FILE NAME
-};
+    const CONFIG = {
+        CORRECT_PIN: '1234',  // ← CHANGE THIS TO YOUR PIN
+        SESSION_HOURS: 8,
+        REDIRECT_URL: 'your-kds-file.html'  // ← CHANGE TO YOUR KDS FILE NAME
+    };
 
-const SESSION_DURATION = CONFIG.SESSION_HOURS * 60 * 60 * 1000;
+    const SESSION_DURATION = CONFIG.SESSION_HOURS * 60 * 60 * 1000;
 
-// ============================================
-// AUTH FUNCTIONS
-// ============================================
+    // ============================================
+    // AUTH FUNCTIONS
+    // ============================================
 
-function checkAuth() {
-    const authData = localStorage.getItem('kds_auth');
-    
-    if (!authData) {
-        return false;
-    }
-    
-    try {
-        const parsed = JSON.parse(authData);
-        const now = Date.now();
+    function checkAuth() {
+        const authData = localStorage.getItem('kds_auth');
         
-        // Check if session expired
-        if (now - parsed.timestamp > SESSION_DURATION) {
-            localStorage.removeItem('kds_auth');
+        if (!authData) {
             return false;
         }
         
-        return parsed.authenticated === true;
-    } catch (e) {
-        localStorage.removeItem('kds_auth');
-        return false;
+        try {
+            const parsed = JSON.parse(authData);
+            const now = Date.now();
+            
+            // Check if session expired
+            if (now - parsed.timestamp > SESSION_DURATION) {
+                localStorage.removeItem('kds_auth');
+                return false;
+            }
+            
+            return parsed.authenticated === true;
+        } catch (e) {
+            localStorage.removeItem('kds_auth');
+            return false;
+        }
     }
-}
 
-function handleLogin() {
-    const inputPin = document.getElementById('loginPassword').value.trim();
-    const errorDiv = document.getElementById('loginError');
-    const container = document.getElementById('loginContainer');
-    
-    if (inputPin === CONFIG.CORRECT_PIN) {
-        // ✅ CORRECT PIN
-        const loginData = {
-            authenticated: true,
-            timestamp: Date.now(),
-            user: 'Kitchen Staff'
-        };
+    function handleLogin() {
+        const inputPin = document.getElementById('loginPassword').value.trim();
+        const errorDiv = document.getElementById('loginError');
+        const container = document.getElementById('loginContainer');
         
-        localStorage.setItem('kds_auth', JSON.stringify(loginData));
-        
-        // Hide error
-        errorDiv.classList.remove('show');
-        
-        // Show success
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('successScreen').classList.add('show');
-        
-        console.log('✅ Login successful');
-        
-        // Redirect to KDS after 1 second
-        setTimeout(() => {
-            window.location.href = CONFIG.REDIRECT_URL;
-        }, 1000);
-        
-    } else {
-        // ❌ WRONG PIN
-        errorDiv.classList.add('show');
-        document.getElementById('loginPassword').value = '';
-        document.getElementById('loginPassword').focus();
-        
-        // Shake animation
-        container.classList.add('shake');
-        setTimeout(() => {
-            container.classList.remove('shake');
-        }, 500);
-        
-        console.log('❌ Invalid PIN');
-    }
-}
-
-// ============================================
-// EVENT LISTENERS
-// ============================================
-
-document.getElementById('loginButton').addEventListener('click', handleLogin);
-
-document.getElementById('loginPassword').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        handleLogin();
-    }
-});
-
-// Focus input on load
-window.addEventListener('DOMContentLoaded', () => {
-    // If already authenticated, redirect immediately
-    if (checkAuth()) {
-        console.log('✅ Already authenticated - redirecting...');
-        window.location.href = CONFIG.REDIRECT_URL;
-    } else {
-        // Not authenticated - show login
-        setTimeout(() => {
+        if (inputPin === CONFIG.CORRECT_PIN) {
+            // ✅ CORRECT PIN
+            const loginData = {
+                authenticated: true,
+                timestamp: Date.now(),
+                user: 'Kitchen Staff'
+            };
+            
+            localStorage.setItem('kds_auth', JSON.stringify(loginData));
+            
+            // Hide error
+            errorDiv.classList.remove('show');
+            
+            // Show success
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('successScreen').classList.add('show');
+            
+            console.log('✅ Login successful');
+            
+            // Redirect to KDS after 1 second
+            setTimeout(() => {
+                window.location.href = CONFIG.REDIRECT_URL;
+            }, 1000);
+            
+        } else {
+            // ❌ WRONG PIN
+            errorDiv.classList.add('show');
+            document.getElementById('loginPassword').value = '';
             document.getElementById('loginPassword').focus();
-        }, 300);
+            
+            // Shake animation
+            container.classList.add('shake');
+            setTimeout(() => {
+                container.classList.remove('shake');
+            }, 500);
+            
+            console.log('❌ Invalid PIN');
+        }
     }
-});
 
-console.log('🔐 Login system ready');
-</script>
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+
+    document.getElementById('loginButton').addEventListener('click', handleLogin);
+
+    document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleLogin();
+        }
+    });
+
+    // Focus input on load
+    window.addEventListener('DOMContentLoaded', () => {
+        // If already authenticated, redirect immediately
+        if (checkAuth()) {
+            console.log('✅ Already authenticated - redirecting...');
+            window.location.href = CONFIG.REDIRECT_URL;
+        } else {
+            // Not authenticated - show login
+            setTimeout(() => {
+                document.getElementById('loginPassword').focus();
+            }, 300);
+        }
+    });
+
+    console.log('🔐 Login system ready');
+    </script>
 
 </body>
 </html>
