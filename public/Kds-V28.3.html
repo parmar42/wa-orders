@@ -5,9 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>East Moon KDS - Advanced Kitchen Display</title>
-    <button class="icon-btn" onclick="logout()" title="Logout">
-    🚪 Logout
-    </button>
     <style>
         * {
             margin: 0;
@@ -694,165 +691,9 @@
             background: #555;
             border-radius: 4px;
         }
-
-    /* ============================================
-    LOGIN SCREEN - FIXED POSITIONING
-    ============================================ */
-
-    .login-overlay {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 99999 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-    }
-
-    .login-overlay.hidden {
-        display: none !important;
-    }
-
-    .login-container {
-        background: white;
-        padding: 40px;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        max-width: 400px;
-        width: 90%;
-        position: relative;
-        z-index: 100000;
-    }
-
-    .login-header h1 {
-        margin: 0 0 10px 0;
-        font-size: 28px;
-        color: #333;
-        text-align: center;
-    }
-
-    .login-header p {
-        margin: 0 0 30px 0;
-        color: #666;
-        text-align: center;
-        font-size: 14px;
-    }
-
-    .login-body {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .login-input {
-        width: 100%;
-        padding: 15px;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        font-size: 18px;
-        text-align: center;
-        letter-spacing: 8px;
-        box-sizing: border-box;
-        outline: none;
-        transition: border-color 0.2s;
-    }
-
-    .login-input:focus {
-        border-color: #667eea;
-    }
-
-    .login-button {
-        width: 100%;
-        padding: 15px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-sizing: border-box;
-    }
-
-    .login-button:hover {
-        background: #5568d3;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    .login-button:active {
-        transform: scale(0.98);
-    }
-
-    .login-error {
-        color: #f44336;
-        text-align: center;
-        font-size: 14px;
-        display: none;
-        padding: 10px;
-        background: #ffebee;
-        border-radius: 6px;
-    }
-
-    .login-error.show {
-        display: block;
-    }
-
-    /* Shake animation for wrong PIN */
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-        20%, 40%, 60%, 80% { transform: translateX(10px); }
-    }
-
-    .shake {
-        animation: shake 0.5s;
-    }
     </style>
 </head>
 <body>
-
-<!-- LOGIN SCREEN - FIXED POSITIONING -->
-<div id="loginScreen" class="login-overlay">
-    <div class="login-container">
-        <div class="login-header">
-            <h1>🍜 Tap+Serve KDS</h1>
-            <p>Kitchen Display System</p>
-        </div>
-        
-        <div class="login-body">
-            <input 
-                type="password" 
-                id="loginPassword" 
-                placeholder="Enter PIN"
-                autocomplete="off"
-                class="login-input"
-                onkeypress="if(event.key==='Enter') loginAttempt()"
-            />
-            
-            <button 
-                onclick="loginAttempt()"
-                class="login-button"
-            >
-                Login
-            </button>
-            
-            <div id="loginError" class="login-error">
-                ❌ Invalid PIN. Please try again.
-            </div>
-        </div>
-    </div>
-</div>
-
     <div class="top-header">
         <div class="time-display" id="currentTime">10:00 AM</div>
         <div class="header-actions">
@@ -1183,97 +1024,49 @@
     </div>
 
     <script>
+    // ============================================
+    // AUTH CHECK - RUNS BEFORE ANYTHING ELSE
+    // ============================================
 
-// ============================================
-// LOGIN SYSTEM - FIXED VERSION
-// ============================================
-
-const CORRECT_PIN = '1234';  // ← CHANGE THIS TO YOUR PIN
-const SESSION_DURATION = 8 * 60 * 60 * 1000;  // 8 hours
-
-function loginAttempt() {
-    const inputPin = document.getElementById('loginPassword').value;
-    const errorDiv = document.getElementById('loginError');
-    const loginContainer = document.querySelector('.login-container');
-    
-    if (inputPin === CORRECT_PIN) {
-        // ✅ CORRECT PIN
-        const loginData = {
-            authenticated: true,
-            timestamp: Date.now()
-        };
+    (function() {
+        const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours
         
-        localStorage.setItem('kds_auth', JSON.stringify(loginData));
+        function checkAuth() {
+            const authData = localStorage.getItem('kds_auth');
+            
+            if (!authData) {
+                return false;
+            }
+            
+            try {
+                const parsed = JSON.parse(authData);
+                const now = Date.now();
+                
+                // Check if session expired
+                if (now - parsed.timestamp > SESSION_DURATION) {
+                    localStorage.removeItem('kds_auth');
+                    return false;
+                }
+                
+                return parsed.authenticated === true;
+            } catch (e) {
+                localStorage.removeItem('kds_auth');
+                return false;
+            }
+        }
         
-        // Hide login screen with class toggle
-        document.getElementById('loginScreen').classList.add('hidden');
+        // Check auth immediately
+        if (!checkAuth()) {
+            // Not authenticated - redirect to login
+            console.log('🔒 Not authenticated - redirecting to login...');
+            window.location.replace('kds-login.html');
+            
+            // Stop page from loading
+            throw new Error('Authentication required');
+        }
         
-        // Clear input
-        document.getElementById('loginPassword').value = '';
-        errorDiv.classList.remove('show');
-        
-        console.log('✅ Login successful');
-        
-    } else {
-        // ❌ WRONG PIN
-        errorDiv.classList.add('show');
-        document.getElementById('loginPassword').value = '';
-        document.getElementById('loginPassword').focus();
-        
-        // Shake animation
-        loginContainer.classList.add('shake');
-        setTimeout(() => {
-            loginContainer.classList.remove('shake');
-        }, 500);
-    }
-}
-
-function checkAuth() {
-    const authData = localStorage.getItem('kds_auth');
-    
-    if (!authData) {
-        return false;
-    }
-    
-    const parsed = JSON.parse(authData);
-    const now = Date.now();
-    
-    // Check if session expired
-    if (now - parsed.timestamp > SESSION_DURATION) {
-        localStorage.removeItem('kds_auth');
-        return false;
-    }
-    
-    return parsed.authenticated;
-}
-
-function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        localStorage.removeItem('kds_auth');
-        location.reload();
-    }
-}
-
-// Initialize login screen on page load
-window.addEventListener('DOMContentLoaded', () => {
-    const loginScreen = document.getElementById('loginScreen');
-    
-    if (checkAuth()) {
-        // Already authenticated - hide login
-        loginScreen.classList.add('hidden');
-        console.log('✅ Session valid');
-    } else {
-        // Not authenticated - show login
-        loginScreen.classList.remove('hidden');
-        
-        // Focus input after a brief delay
-        setTimeout(() => {
-            document.getElementById('loginPassword')?.focus();
-        }, 200);
-        
-        console.log('🔒 Please login');
-    }
-});
+        console.log('✅ Authenticated - loading KDS...');
+    })();
 
 
     // ============================================
