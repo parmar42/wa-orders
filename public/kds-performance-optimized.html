@@ -1301,6 +1301,8 @@
 
     function updateTimers() {
         const now = Date.now();
+        let needsFullRender = false;
+        
         orders.forEach(order => {
             order.timer = Math.floor((now - order.startTime) / 1000);
             
@@ -1311,16 +1313,54 @@
                 if (elapsed >= lockTime) {
                     order.locked = true;
                     playSound('lock');
+                    needsFullRender = true;  // Lock status changed - need full render
                 }
             }
             
             if (order.timer / 60 > order.promiseTime && !order.alertedOverdue) {
                 order.alertedOverdue = true;
                 playSound('overdue');
+                needsFullRender = true;  // Overdue status changed - need full render
             }
         });
-        renderOrdersDebounced();  // Use debounced version for better performance
+        
+        // Only full re-render if lock or overdue status changed
+        if (needsFullRender) {
+            renderOrders();
+        } else {
+            // Just update timer displays without re-rendering
+            updateTimerDisplays();
+        }
     }
+
+
+        // NEW FUNCTION: Update only timer elements
+    function updateTimerDisplays() {
+        orders.forEach(order => {
+            const orderCard = document.querySelector(`[data-order-id="${order.id}"]`);
+            if (!orderCard) return;
+            
+            const timerElement = orderCard.querySelector('.timer');
+            if (!timerElement) return;
+            
+            // Update timer text
+            timerElement.textContent = formatTimer(order.timer);
+            
+            // Update timer color class
+            const elapsed = order.timer / 60;
+            const progress = (elapsed / order.promiseTime) * 100;
+            
+            timerElement.className = 'timer';
+            if (progress >= 90) {
+                timerElement.classList.add('critical');
+            } else if (progress >= 75) {
+                timerElement.classList.add('warning');
+            } else {
+                timerElement.classList.add('normal');
+            }
+        });
+    }
+
 
     function updateLoadIndicator() {
         const totalOrders = orders.length;
