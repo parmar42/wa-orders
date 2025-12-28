@@ -1705,7 +1705,6 @@
         }
         console.log('✅ Socket Connected:', socket.id);
         
-        // Fetch orders from database on connect
         fetchOrdersFromSupabase();
     });
 
@@ -1725,10 +1724,6 @@
     // Listen for new orders (Tap+Serve format)
     socket.on('new_order', (receivedData) => {
         console.log('🎯 NEW ORDER EVENT:', receivedData);
-        console.log('📦 Raw data:', JSON.stringify(receivedData, null, 2));
-    
-    // ... rest of your code
-    });
         
         try {
             const orderData = Array.isArray(receivedData) ? receivedData[0] : receivedData;
@@ -1757,7 +1752,6 @@
                 orderNumber: orderData.orderNumber || 'EM' + Date.now()
             };
             
-            // Check if order already exists
             const existingIndex = orders.findIndex(o => o.orderNumber === newOrder.orderNumber);
             if (existingIndex === -1) {
                 console.log('📊 Adding order:', newOrder.orderNumber);
@@ -1773,7 +1767,7 @@
         } catch (error) {
             console.error('❌ Error processing order:', error);
         }
-    
+    });  // ← Close new_order handler HERE
 
     // Listen for legacy format
     socket.on('new-kds-order', (data) => {
@@ -1817,12 +1811,46 @@
         } catch (error) {
             console.error('❌ Legacy order error:', error);
         }
+    });  // ← Close new-kds-order handler HERE
 
-    
+    // Listen for order status updates from other KDS displays
+    socket.on('order_updated', (updateData) => {
+        console.log('📡 Order status update received:', updateData);
         
-        
-
-    });
+        try {
+            const order = orders.find(o => o.id === updateData.orderId);
+            
+            if (order) {
+                console.log(`🔄 Updating ${order.orderNumber} from ${order.status} to ${updateData.status}`);
+                
+                order.status = updateData.status;
+                
+                if (updateData.status === 'completed') {
+                    const orderCard = document.querySelector(`[data-order-id="${order.id}"]`);
+                    if (orderCard) {
+                        orderCard.style.opacity = '0.5';
+                        orderCard.style.transition = 'opacity 0.5s';
+                    }
+                    
+                    setTimeout(() => {
+                        orders = orders.filter(o => o.id !== order.id);
+                        renderOrders();
+                        updateLoadIndicator();
+                    }, 2000);
+                } else {
+                    renderOrders();
+                    updateLoadIndicator();
+                }
+                
+                console.log('✅ Local display updated');
+            } else {
+                console.log('⚠️ Order not found in local array');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error processing status update:', error);
+        }
+    });  // ← Close order_updated handler HERE
 
     // ============================================
     // INITIALIZATION
