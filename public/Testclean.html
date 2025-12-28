@@ -213,8 +213,8 @@
 
         /* Order Card */
         .order-card {
-            min-width: 290px;
-            max-width: 290px;
+            min-width: 300px;
+            max-width: 300px;
             background: #fff;
             border-radius: 12px;
             overflow: hidden;
@@ -1473,16 +1473,9 @@
             'buttons and',
             document.querySelectorAll('.item-check').length,
             'checkboxes');
-
-            
-
-        console.log('✅ Attached listeners to', 
-            document.querySelectorAll('.btn-start, .btn-ready, .btn-complete').length, 
-            'buttons');
     }
     
     
-
     function applyWeightedQueue(ordersArray) {
         const locked = ordersArray.filter(o => o.locked);
         const unlocked = ordersArray.filter(o => !o.locked);
