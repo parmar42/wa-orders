@@ -203,13 +203,12 @@
         }
 
         /* Orders Container */
-                .orders-container {
+        .orders-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));  /* Responsive columns */
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
-            max-height: calc(100vh - 400px);  /* Leave room for header */
-            overflow-y: scroll;   /* Enable vertical scrolling */
-            padding-right: 10px;
+            padding: 10px;
+            /* No max-height! */
         }
 
         /* Order Card */
