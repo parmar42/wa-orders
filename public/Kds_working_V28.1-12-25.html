@@ -1258,7 +1258,7 @@
     console.log('New Status:', newStatus);
     console.log('Orders array:', orders);
     
-    const order = orders.find(o => o.id === orderId);
+    const order = orders.find(o => String(o.id) === String(orderId));
     
     if (!order) {
         console.error('❌ Order not found! ID:', orderId);
@@ -1288,7 +1288,7 @@
         }
         
         setTimeout(() => {
-            orders = orders.filter(o => o.id !== orderId);
+            orders = orders.filter(o => String(o.id) !== String(orderId));
             renderOrders();
             updateLoadIndicator();
         }, 2000);
@@ -1379,7 +1379,7 @@
             }
             
             return `
-                <div class="${cardClasses}" data-order-id="${order.id}">
+                <div class="${cardClasses}" data-order-id="${String(order.id)}">
                     <div class="order-header">
                         <div class="order-number-section">
                             <div class="order-number">
