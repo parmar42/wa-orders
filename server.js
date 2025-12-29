@@ -102,9 +102,9 @@ app.get('/health', (req, res) => {
             orderNumber, 
             note: "Order sent to kitchen, but external automation had an issue." 
         });
-**/    }
-//});
-
+    }
+    });
+**/
 // ============================================
 // NEW ENDPOINT - NODE.JS / SUPABASE (TAP+SERVE)
 // ============================================
