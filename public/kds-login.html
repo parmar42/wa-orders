@@ -491,14 +491,26 @@ document.getElementById('loginPassword').addEventListener('keydown', (e) => {
 
 document.addEventListener('touchstart', function() {}, {passive: true});
 
-// Handle keyboard on mobile
-let initialHeight = window.innerHeight;
+
+// Set initial height BEFORE any focus happens
+setTimeout(() => {
+    initialHeight = window.innerHeight;
+}, 100);
 
 window.addEventListener('resize', () => {
-    if (window.innerHeight < initialHeight * 0.75) {
-        document.getElementById('loginContainer').style.transform = 'translateY(-10%)';
+    const currentHeight = window.innerHeight;
+    
+    // Keyboard appeared (viewport shrunk significantly)
+    if (currentHeight < initialHeight * 0.7) {
+        // Move modal up more aggressively
+        document.getElementById('loginContainer').style.transform = 'translateY(-25%)';
+        document.querySelector('.login-overlay').style.alignItems = 'flex-start';
+        document.querySelector('.login-overlay').style.paddingTop = '20px';
     } else {
+        // Keyboard closed - reset
         document.getElementById('loginContainer').style.transform = '';
+        document.querySelector('.login-overlay').style.alignItems = 'center';
+        document.querySelector('.login-overlay').style.paddingTop = '';
     }
 });
 
