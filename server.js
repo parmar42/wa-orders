@@ -35,7 +35,45 @@ app.get('/health', (req, res) => {
 // ============================================
 // LEGACY ENDPOINT - GOOGLE SHEETS / MAKE.COM
 // ============================================
+//app.post('/submit-order', async (req, res) => {
+    const orderData = req.body; 
+    const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
 
+    // Format the text for Trello description and WhatsApp message
+    const itemDetails = orderData.orderItems
+        .map(item => `${item.name} x${item.quantity}`)
+        .join('\n');
+    
+    const plainTextMessage = `*Order #${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
+    const whatsappUpdate = `✅ Order confirmed!\n\n*Order# ${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
+    
+    // ✅ BROADCAST TO KDS - LEGACY FORMAT
+    io.emit('new-kds-order', { 
+        orderNumber, 
+        ...orderData, 
+        plainTextMessage 
+    });
+    console.log("📢 Legacy order broadcast to KDS:", orderNumber);
+
+    try {
+        // Save to Supabase
+        const { data: savedOrder, error: dbError } = await supabase
+            .from('orders')
+            .insert([{ 
+                order_number: orderNumber,
+                customer_name: orderData.customerName,
+                phone_number: orderData.phoneNumber,
+                user_input: orderData.userInput,
+                delivery_address: orderData.deliveryAddress,
+                order_type: orderData.orderType,
+                total_amount: orderData.totalAmount,
+                order_items: JSON.stringify(orderData.orderItems),
+                status: 'new'
+            }])
+            .select()
+            .single();
+
+        if (dbError) throw dbError;
 
         // Send to Trello
         await axios.post(`https://api.trello.com/1/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, {
@@ -65,7 +103,7 @@ app.get('/health', (req, res) => {
             note: "Order sent to kitchen, but external automation had an issue." 
         });
     }
-});
+//});
 
 // ============================================
 // NEW ENDPOINT - NODE.JS / SUPABASE (TAP+SERVE)
