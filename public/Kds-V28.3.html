@@ -693,14 +693,14 @@
             border-radius: 4px;
         }
     </style>
-</button>
 </head>
 <body>
     <div class="top-header">
         <div class="time-display" id="currentTime">10:00 AM</div>
         <div class="header-actions">
-             <button class="icon-btn" onclick="logout()" title="Logout">
+            <button class="icon-btn" onclick="logout()" title="Logout">
                 🚪 Logout
+            </button>
             <button class="icon-btn" onclick="clearAllOrders()" title="Clear All">
                 🗑️ Clear
             </button>
@@ -727,7 +727,7 @@
          style="width: 12px; height: 12px; background: #ff4b2b; border-radius: 50%; margin-right: 8px; transition: 0.3s;" 
          title="Disconnected"></div>
                 <span><img src= "https://raw.githubusercontent.com/parmar42/images/main/square-mouse-pointer%20(3).png" alt="logo">
-                </span><span style="font-size: 20px; font-weight: bolder; color:#08850e;">tap+serve</span> </h1>
+                </span><span style="font-size: 20px; font-weight: bolder; color:#08850e;">tap+serve</span>
             </div>
         </div>
     </div>
@@ -1080,7 +1080,7 @@
     const CONFIG = {
         APPS_SCRIPT_URL: '',  // Not using
         NODEJS_URL: 'https://wa-orders.onrender.com',
-        WHATSAPP_API: '',  // Not using
+      //WHATSAPP_API: '',  // Not using
     };
 
     let orders = [];
@@ -1229,10 +1229,11 @@
 
     function updateTimers() {
         const now = Date.now();
+        let needsFullRender = false;
+        
         orders.forEach(order => {
             order.timer = Math.floor((now - order.startTime) / 1000);
             
-            // Check for locking
             if (settings.anchoring && !order.locked && order.source !== 'walkin') {
                 const elapsed = order.timer / 60;
                 const lockTime = (order.promiseTime * settings.lockThreshold) / 100;
@@ -1240,16 +1241,51 @@
                 if (elapsed >= lockTime) {
                     order.locked = true;
                     playSound('lock');
+                    needsFullRender = true;  // Lock status changed - need full render
                 }
             }
             
-            // Check for overdue
             if (order.timer / 60 > order.promiseTime && !order.alertedOverdue) {
                 order.alertedOverdue = true;
                 playSound('overdue');
+                needsFullRender = true;  // Overdue status changed - need full render
             }
         });
-        renderOrders();
+        
+        // Only full re-render if lock or overdue status changed
+        if (needsFullRender) {
+            renderOrders();
+        } else {
+            // Just update timer displays without re-rendering
+            updateTimerDisplays();
+        }
+    }
+
+    // NEW FUNCTION: Update only timer elements
+    function updateTimerDisplays() {
+        orders.forEach(order => {
+            const orderCard = document.querySelector(`[data-order-id="${order.id}"]`);
+            if (!orderCard) return;
+            
+            const timerElement = orderCard.querySelector('.timer');
+            if (!timerElement) return;
+            
+            // Update timer text
+            timerElement.textContent = formatTimer(order.timer);
+            
+            // Update timer color class
+            const elapsed = order.timer / 60;
+            const progress = (elapsed / order.promiseTime) * 100;
+            
+            timerElement.className = 'timer';
+            if (progress >= 90) {
+                timerElement.classList.add('critical');
+            } else if (progress >= 75) {
+                timerElement.classList.add('warning');
+            } else {
+                timerElement.classList.add('normal');
+            }
+        });
     }
 
     function updateLoadIndicator() {
