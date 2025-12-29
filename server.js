@@ -8,7 +8,12 @@ const { Server } = require('socket.io');
 // 1. INITIALIZE APP & SERVER
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server); // For the KDS real-time updates
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST", "PUT"]
+    }
+});
 const PORT = process.env.PORT || 3000;
 
 // 2. INITIALIZE SUPABASE
@@ -16,8 +21,20 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 // 3. MIDDLEWARE
 app.use(express.json());
-app.use(express.static('public')); // Serves your index.html and script.js
+app.use(express.static('public'));
 
+// 4. HEALTH CHECK ENDPOINT
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'healthy', 
+        timestamp: new Date().toISOString(),
+        connections: io.engine.clientsCount
+    });
+});
+
+// ============================================
+// LEGACY ENDPOINT - GOOGLE SHEETS / MAKE.COM
+// ============================================
 app.post('/submit-order', async (req, res) => {
     const orderData = req.body; 
     const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
@@ -29,39 +46,43 @@ app.post('/submit-order', async (req, res) => {
     
     const plainTextMessage = `*Order #${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
     const whatsappUpdate = `✅ Order confirmed!\n\n*Order# ${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
-    // 1. BROADCAST TO KDS (Immediate - even if others fail)
-    io.emit('new-kds-order', { orderNumber, ...orderData, plainTextMessage });
-    console.log("📢 Shouted to KDS:", orderNumber);
+    
+    // ✅ BROADCAST TO KDS - LEGACY FORMAT
+    io.emit('new-kds-order', { 
+        orderNumber, 
+        ...orderData, 
+        plainTextMessage 
+    });
+    console.log("📢 Legacy order broadcast to KDS:", orderNumber);
 
     try {
-       // 2. SAVE TO SUPABASE (Explicitly mapping columns)
-        const { error: dbError } = await supabase
+        // Save to Supabase
+        const { data: savedOrder, error: dbError } = await supabase
             .from('orders')
             .insert([{ 
                 order_number: orderNumber,
-                customer_name: orderData.customerName, // Ensure these match your Supabase columns
+                customer_name: orderData.customerName,
                 phone_number: orderData.phoneNumber,
                 user_input: orderData.userInput,
                 delivery_address: orderData.deliveryAddress,
                 order_type: orderData.orderType,
                 total_amount: orderData.totalAmount,
-                order_items: JSON.stringify(orderData.orderItems), // Items must be saved as text or JSON
+                order_items: JSON.stringify(orderData.orderItems),
                 status: 'new'
-            }]);
+            }])
+            .select()
+            .single();
 
-        if (dbError) throw dbError; // If Supabase fails, catch it below
-        // 3. SEND TO TRELLO (Visual Board)
+        if (dbError) throw dbError;
+
+        // Send to Trello
         await axios.post(`https://api.trello.com/1/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, {
             idList: process.env.TRELLO_LIST_ID,
-            name: `Order #${orderNumber} - ${orderData.customerName} - ${plainTextMessage}`,
+            name: `Order #${orderNumber} - ${orderData.customerName}`,
             desc: plainTextMessage
-            
-            //`Order sent from ${orderData.phoneNumber} | Customer filled number ${userInput}\n\n${plainTextMessage}`,
-            
         });
 
-        // 4. SEND WHATSAPP (Customer Receipt)
-        // Uses the wa_number captured from your URL
+        // Send WhatsApp
         await axios.post(`https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, {
             messaging_product: "whatsapp",
             to: orderData.phoneNumber,
@@ -71,14 +92,11 @@ app.post('/submit-order', async (req, res) => {
             headers: { 'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}` }
         });
 
-        // If everything succeeds, send this response
         res.status(200).json({ success: true, orderNumber });
 
     } catch (error) {
-        // If Trello, Supabase, or WhatsApp fails, we log it here
-        console.error("Automation Error Log:", error.response?.data || error.message);
+        console.error("❌ Legacy order automation error:", error.response?.data || error.message);
         
-        // We still send success:true to the user because the KDS worked!
         res.status(200).json({ 
             success: true, 
             orderNumber, 
@@ -87,11 +105,74 @@ app.post('/submit-order', async (req, res) => {
     }
 });
 
+// ============================================
+// NEW ENDPOINT - NODE.JS / SUPABASE (TAP+SERVE)
+// ============================================
+app.post('/api/orders', async (req, res) => {
+    try {
+        const orderData = req.body;
+        
+        console.log('📥 Received new order:', orderData);
+        
+        // Save to Supabase (Supabase generates UUID automatically)
+        const { data: savedOrder, error: dbError } = await supabase
+            .from('orders')
+            .insert([{
+                order_number: orderData.orderNumber || `EM${Date.now()}`,
+                customer_name: orderData.customer || orderData.customerName,
+                phone_number: orderData.phone || orderData.phoneNumber,
+                order_source: orderData.source || 'phone',
+                order_items: JSON.stringify(orderData.items || []),
+                promise_time: orderData.promiseTime || 20,
+                status: 'new'
+            }])
+            .select()
+            .single();
+        
+        if (dbError) {
+            console.error('❌ Supabase insert error:', dbError);
+            return res.status(500).json({
+                success: false,
+                message: dbError.message
+            });
+        }
+        
+        console.log('✅ Order saved to Supabase with ID:', savedOrder.id);
+        
+        // ✅ BROADCAST TO ALL KDS - NEW FORMAT WITH UUID
+        const kdsOrder = {
+            id: savedOrder.id,  // ← UUID from Supabase
+            orderNumber: savedOrder.order_number,
+            customer: savedOrder.customer_name,
+            phone: savedOrder.phone_number,
+            source: savedOrder.order_source,
+            items: JSON.parse(savedOrder.order_items),
+            promiseTime: savedOrder.promise_time,
+            status: savedOrder.status,
+            createdAt: savedOrder.created_at
+        };
+        
+        io.emit('new_order', kdsOrder);  // ← CORRECT EVENT NAME
+        console.log('📡 Broadcast new_order event with UUID:', savedOrder.id);
+        
+        res.json({
+            success: true,
+            message: 'Order created successfully',
+            order: kdsOrder
+        });
+        
+    } catch (error) {
+        console.error('❌ Create order error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
 
-/**
- * GET ALL ORDERS
- * GET /api/orders
- */
+// ============================================
+// GET ORDERS
+// ============================================
 app.get('/api/orders', async (req, res) => {
     try {
         const { status, source, limit = 50 } = req.query;
@@ -102,7 +183,7 @@ app.get('/api/orders', async (req, res) => {
             .order('created_at', { ascending: false })
             .limit(parseInt(limit));
         
-        // Filter by status (can be comma-separated like: new,preparing,ready)
+        // Filter by status (comma-separated: new,preparing,ready)
         if (status) {
             const statuses = status.split(',');
             query = query.in('status', statuses);
@@ -139,13 +220,12 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
-/**
- * UPDATE ORDER STATUS
- * PUT /api/orders/:orderNumber/status
- */
+// ============================================
+// UPDATE ORDER STATUS
+// ============================================
 app.put('/api/orders/:orderId/status', async (req, res) => {
     try {
-        const { orderId } = req.params;
+        const { orderId } = req.params;  // ← This is the UUID
         const { status } = req.body;
         
         console.log(`📝 Updating order ${orderId} to status: ${status}`);
@@ -156,7 +236,7 @@ app.put('/api/orders/:orderId/status', async (req, res) => {
                 status: status,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', orderId)
+            .eq('id', orderId)  // ← Match by UUID
             .select()
             .single();
         
@@ -168,14 +248,14 @@ app.put('/api/orders/:orderId/status', async (req, res) => {
             });
         }
         
-        // Broadcast status change to all connected KDS displays
+        // ✅ BROADCAST STATUS CHANGE TO ALL KDS DISPLAYS
         io.emit('order_updated', {
-            orderId: orderId,
+            orderId: orderId,  // ← UUID
             status: status,
             updatedAt: new Date().toISOString()
         });
         
-        console.log('✅ Order updated and broadcast to all KDS');
+        console.log(`✅ Order ${updatedOrder.order_number} updated to ${status} and broadcast`);
         
         res.json({
             success: true,
@@ -192,10 +272,24 @@ app.put('/api/orders/:orderId/status', async (req, res) => {
     }
 });
 
+// ============================================
+// SOCKET.IO CONNECTION HANDLING
+// ============================================
+io.on('connection', (socket) => {
+    console.log('✅ KDS connected:', socket.id);
+    console.log('📊 Total connections:', io.engine.clientsCount);
+    
+    socket.on('disconnect', () => {
+        console.log('🔴 KDS disconnected:', socket.id);
+        console.log('📊 Total connections:', io.engine.clientsCount);
+    });
+});
 
-// 5. START SERVER (Crucial for Render)
+// ============================================
+// START SERVER
+// ============================================
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-
-
+    console.log(`🔌 Socket.io ready for real-time updates`);
+    console.log(`📡 Broadcasting on events: 'new_order', 'new-kds-order', 'order_updated'`);
 });
