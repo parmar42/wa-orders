@@ -121,12 +121,12 @@ app.post('/api/orders', async (req, res) => {
         const { data: savedOrder, error: dbError } = await supabase
             .from('orders')
             .insert([{
-                order_number: orderData.orderNumber || `EM${Date.now()}`,
+                order_number: orderData.orderNumber || `MN${Date.now()}`,
                 customer_name: orderData.customer || orderData.customerName,
                 phone_number: orderData.phone || orderData.phoneNumber,
                 order_source: orderData.source || 'phone',
                 delivery_address: orderData.deliveryAddress,
-                order_items: JSON.stringify(orderData.items),
+                order_items: JSON.stringify(orderData.items || []),
                 promise_time: orderData.promiseTime || 20,
                 status: 'new'
             }])
