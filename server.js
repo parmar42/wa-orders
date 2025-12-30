@@ -129,7 +129,7 @@ app.post('/submit-order', async (req, res) => {
 // ============================================
 app.post('/api/orders', async (req, res) => {
    const orderData = req.body; 
-    const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
+    const orderNumber = "SM" + Math.floor(1000 + Math.random() * 9000);
 
     const itemDetails = orderData.orderItems
         .map(item => `${item.name} x${item.quantity}`)
@@ -181,7 +181,7 @@ app.post('/api/orders', async (req, res) => {
         // Send WhatsApp (if configured)
         if (process.env.META_PHONE_ID && process.env.META_ACCESS_TOKEN) {
             await axios.post(
-                `https://graph.facebook.com/v23.0/${process.env.META_PHONE_ID}/messages`, 
+                `https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, 
                 {
                     messaging_product: "whatsapp",
                     to: 12462348400,
