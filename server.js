@@ -128,83 +128,80 @@ app.post('/submit-order', async (req, res) => {
 // NEW ENDPOINT - NODE.JS / SUPABASE
 // ============================================
 app.post('/api/orders', async (req, res) => {
-    try {
-        const orderData = req.body;
-        
-        console.log('📥 New order received:', orderData.orderNumber || 'N/A');
-        
-        // Validate required fields
-        if (!orderData.customer && !orderData.customerName) {
-            return res.status(400).json({
-                success: false,
-                message: 'Customer name is required'
-            });
-        }
+   const orderData = req.body; 
+    const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
 
-        // Parse items - handle both array and string formats
-        let itemsToSave = [];
-        if (Array.isArray(orderData.items)) {
-            itemsToSave = orderData.items;
-        } else if (typeof orderData.items === 'string') {
-            try {
-                itemsToSave = JSON.parse(orderData.items);
-            } catch (e) {
-                itemsToSave = [{name: orderData.items, quantity: 1}];
-            }
-        }
-        
-        // Save to Supabase (auto-generates UUID)
+    const itemDetails = orderData.orderItems
+        .map(item => `${item.name} x${item.quantity}`)
+        .join('\n');
+    
+    const plainTextMessage = `*Order #${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
+    const whatsappUpdate = `✅ Order confirmed!\n\n*Order# ${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
+    
+    // Broadcast to KDS - Legacy format
+    io.emit('new-kds-order', { 
+        orderNumber, 
+        ...orderData, 
+        plainTextMessage 
+    });
+    console.log("📢 Legacy order broadcast:", orderNumber);
+
+    try {
+        // Save to Supabase
         const { data: savedOrder, error: dbError } = await supabase
             .from('orders')
-            .insert([{
-                order_number: orderData.orderNumber || `EM${Date.now()}`,
-                customer_name: orderData.customer || orderData.customerName,
-                phone_number: orderData.phone || orderData.phoneNumber || '',
-                order_source: orderData.source || 'phone',
-                order_items: JSON.stringify(itemsToSave),
-                promise_time: orderData.promiseTime || 20,
+            .insert([{ 
+                order_number: orderNumber,
+                customer_name: orderData.customerName,
+                phone_number: orderData.phoneNumber,
+                user_input: orderData.userInput,
+                delivery_address: orderData.deliveryAddress,
+                order_source: orderData.orderType?.toLowerCase() || 'phone',
+                total_amount: orderData.totalAmount,
+                order_items: JSON.stringify(orderData.orderItems),
                 status: 'new'
             }])
             .select()
             .single();
-        
-        if (dbError) {
-            console.error('❌ Database error:', dbError.message);
-            return res.status(500).json({
-                success: false,
-                message: dbError.message
-            });
+
+        if (dbError) throw dbError;
+
+        // Send to Trello (if configured)
+        if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN) {
+            await axios.post(
+                `https://api.trello.com/1/cards?key=${process.env.TRELLO_KEY}&token=${process.env.TRELLO_TOKEN}`, 
+                {
+                    idList: process.env.TRELLO_LIST_ID,
+                    name: `Order #${orderNumber} - ${orderData.customerName}`,
+                    desc: plainTextMessage
+                }
+            ).catch(err => console.error('Trello error:', err.message));
         }
-        
-        console.log('✅ Saved to database:', savedOrder.id);
-        
-        // Broadcast to all KDS displays - NEW FORMAT
-        const kdsOrder = {
-            id: savedOrder.id,
-            orderNumber: savedOrder.order_number,
-            customer: savedOrder.customer_name,
-            phone: savedOrder.phone_number,
-            source: savedOrder.order_source,
-            items: JSON.parse(savedOrder.order_items),
-            promiseTime: savedOrder.promise_time,
-            status: savedOrder.status,
-            createdAt: savedOrder.created_at
-        };
-        
-        io.emit('new_order', kdsOrder);
-        console.log('📡 Broadcast new_order:', savedOrder.id);
-        
-        res.json({
-            success: true,
-            message: 'Order created',
-            order: kdsOrder
-        });
-        
+
+        // Send WhatsApp (if configured)
+        if (process.env.META_PHONE_ID && process.env.META_ACCESS_TOKEN) {
+            await axios.post(
+                `https://graph.facebook.com/v23.0/${process.env.META_PHONE_ID}/messages`, 
+                {
+                    messaging_product: "whatsapp",
+                    to: 12462348400,
+                    type: "text",
+                    text: { body: whatsappUpdate }
+                }, 
+                {
+                    headers: { 'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}` }
+                }
+            ).catch(err => console.error('WhatsApp error:', err.message));
+        }
+
+        res.json({ success: true, orderNumber });
+
     } catch (error) {
-        console.error('❌ Create order error:', error.message);
-        res.status(500).json({
-            success: false,
-            message: error.message
+        console.error("❌ Legacy order error:", error.message);
+        res.status(200).json({ 
+            success: true, 
+            orderNumber, 
+            note: "Order sent to kitchen, but external automation had an issue." 
         });
     }
 });
