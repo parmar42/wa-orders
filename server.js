@@ -118,28 +118,37 @@ app.post('/api/orders', async (req, res) => {
         console.log('📥 Received new order:', orderData);
         
         // Save to Supabase (Supabase generates UUID automatically)
-        const { data: savedOrder, error: dbError } = await supabase
-            .from('orders')
-            .insert([{
-                order_number: orderData.orderNumber || `MN${Date.now()}`,
-                customer_name: orderData.customer || orderData.customerName,
-                phone_number: orderData.phone || orderData.phoneNumber,
-                order_source: orderData.source || 'phone',
-                delivery_address: orderData.deliveryAddress,
-                order_items: JSON.stringify(orderData.items || []),
-                promise_time: orderData.promiseTime || 20,
-                status: 'new'
-            }])
-            .select()
-            .single();
-        
-        if (dbError) {
-            console.error('❌ Supabase insert error:', dbError);
-            return res.status(500).json({
-                success: false,
-                message: dbError.message
-            });
-        }
+        const orderNumber = orderData.orderNumber || `MN${Date.now()}`;
+    const customerName = orderData.customer || orderData.customerName;
+    const phoneNumber = orderData.phone || orderData.phoneNumber;
+    const orderSource = orderData.source || 'phone';
+    const deliveryAddress = orderData.deliveryAddress;
+    const orderItems = Array.isArray(orderData.items) ? JSON.stringify(orderData.items) : JSON.stringify([]);
+    const promiseTime = orderData.promiseTime || 20;
+
+    const { data: savedOrder, error: dbError } = await supabase
+        .from('orders')
+        .insert([{
+            order_number: orderNumber,
+            customer_name: customerName,
+            phone_number: phoneNumber,
+            order_source: orderSource,
+            delivery_address: deliveryAddress,
+            order_items: orderItems,
+            promise_time: promiseTime,
+            status: 'new'
+        }])
+        .select()
+        .single();
+
+    if (dbError) {
+        console.error('❌ Supabase insert error:', dbError);
+        return res.status(500).json({
+            success: false,
+            message: dbError.message
+        });
+    }
+
         
         console.log('✅ Order saved to Supabase with ID:', savedOrder.id);
         
