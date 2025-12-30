@@ -76,13 +76,17 @@ app.post('/api/orders', async (req, res) => {             //app.post('/submit-or
                 delivery_address: orderData.deliveryAddress,
                 order_source: orderData.orderType?.toLowerCase() || 'phone',
                 total_amount: orderData.totalAmount,
-                order_items: JSON.stringify(orderData.orderItems),
+                order_items: orderData.orderItems,
                 status: 'new'
             }])
             .select()
             .single();
 
-        if (dbError) throw dbError;
+        if (dbError) {
+        console.error("❌ Supabase insert error:", dbError.message); // ← LOG HERE
+        throw dbError;
+        }
+
 
         // Send to Trello (if configured)
         if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN) {
