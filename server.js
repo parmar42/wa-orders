@@ -37,6 +37,12 @@ if (SUPABASE_URL && SUPABASE_KEY) {
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
+if (SUPABASE_URL && SUPABASE_KEY) {
+    console.log("✅ Supabase credentials loaded successfully from Render Env.");
+} else {
+    console.error("❌ Missing Supabase credentials! Check Render Environment Variables.");
+}
+
 // Create Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
