@@ -102,7 +102,7 @@ app.post('/submit-order', async (req, res) => {
                 `https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, 
                 {
                     messaging_product: "whatsapp",
-                    to: orderData.phoneNumber,
+                    to: 12462348400,
                     type: "text",
                     text: { body: whatsappUpdate }
                 }, 
