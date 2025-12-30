@@ -1464,7 +1464,7 @@
             }
             
             return `
-                <div class="${cardClasses}" data-order-id="${order.id}">
+                <div class="${cardClasses}" data-order-id="${orderId}">
                     <div class="order-header">
                         <div class="order-number-section">
                             <div class="order-number">
@@ -1491,7 +1491,7 @@
                             <div class="order-item">
                                 <div class="item-header">
                                    <div class="item-check ${item.completed ? '' : 'pending'}" 
-                                    data-order-id="${order.id}" 
+                                    data-order-id="${orderId}" 
                                     data-item-index="${idx}">
                                     ${item.completed ? '✓' : '○'}
                                     </div>
