@@ -103,52 +103,39 @@ app.post('/submit-order', async (req, res) => {
             note: "Order sent to kitchen, but external automation had an issue." 
         });
     }
-    });
+});
 
 // ============================================
 // NEW ENDPOINT - NODE.JS / SUPABASE (TAP+SERVE)
 // ============================================
-
 app.post('/api/orders', async (req, res) => {
-        const orderData = req.body;
-        const orderNumber = "SM" + Math.floor(1000 + Math.random() * 9000);
-
     try {
-                
+        const orderData = req.body;
+        
         console.log('📥 Received new order:', orderData);
         
         // Save to Supabase (Supabase generates UUID automatically)
-        const orderNumber = orderData.orderNumber || `MN${Date.now()}`;
-    const customerName = orderData.customer || orderData.customerName;
-    const phoneNumber = orderData.phone || orderData.phoneNumber;
-    const orderSource = orderData.source || 'phone';
-    const deliveryAddress = orderData.deliveryAddress;
-    const orderItems = orderData.items;
-    const promiseTime = orderData.promiseTime || 20;
-
-    const { data: savedOrder, error: dbError } = await supabase
-        .from('orders')
-        .insert([{
-            order_number: orderNumber,
-            customer_name: customerName,
-            phone_number: phoneNumber,
-            order_source: orderSource,
-            delivery_address: deliveryAddress,
-            order_items: orderItems,
-            promise_time: promiseTime,
-            status: 'new'
-        }])
-        .select()
-        .single();
-
-    if (dbError) {
-        console.error('❌ Supabase insert error:', dbError);
-        return res.status(500).json({
-            success: false,
-            message: dbError.message
-        });
-    }
-
+        const { data: savedOrder, error: dbError } = await supabase
+            .from('orders')
+            .insert([{
+                order_number: orderData.orderNumber || `EM${Date.now()}`,
+                customer_name: orderData.customer || orderData.customerName,
+                phone_number: orderData.phone || orderData.phoneNumber,
+                order_source: orderData.source || 'phone',
+                order_items: JSON.stringify(orderData.items || []),
+                promise_time: orderData.promiseTime || 20,
+                status: 'new'
+            }])
+            .select()
+            .single();
+        
+        if (dbError) {
+            console.error('❌ Supabase insert error:', dbError);
+            return res.status(500).json({
+                success: false,
+                message: dbError.message
+            });
+        }
         
         console.log('✅ Order saved to Supabase with ID:', savedOrder.id);
         
@@ -159,7 +146,7 @@ app.post('/api/orders', async (req, res) => {
             customer: savedOrder.customer_name,
             phone: savedOrder.phone_number,
             source: savedOrder.order_source,
-            items: savedOrder.order_items,
+            items: JSON.parse(savedOrder.order_items),
             promiseTime: savedOrder.promise_time,
             status: savedOrder.status,
             createdAt: savedOrder.created_at
