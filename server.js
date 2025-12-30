@@ -189,6 +189,7 @@ app.get('/health', (req, res) => {
         plainTextMessage 
     });
     console.log("📢 Legacy order broadcast:", orderNumber);
+    console.log("📝Order Data details list", orderData);
 
     try {
         // Save to Supabase
