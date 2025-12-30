@@ -110,10 +110,11 @@ app.get('/health', (req, res) => {
 // ============================================
 
 app.post('/api/orders', async (req, res) => {
-    try {
         const orderData = req.body;
-        const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
-        
+        const orderNumber = "SM" + Math.floor(1000 + Math.random() * 9000);
+
+    try {
+                
         console.log('📥 Received new order:', orderData);
         
         // Save to Supabase (Supabase generates UUID automatically)
