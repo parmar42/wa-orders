@@ -46,6 +46,8 @@ app.get('/health', (req, res) => {
 // LEGACY ENDPOINT - GOOGLE SHEETS / MAKE.COM
 // ============================================
 app.post('/api/orders', async (req, res) => {             //app.post('/submit-order', async (req, res) => {
+    console.log("📥 /api/orders endpoint called");
+
     const orderData = req.body; 
     const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
 
@@ -87,6 +89,7 @@ app.post('/api/orders', async (req, res) => {             //app.post('/submit-or
         throw dbError;
         }
 
+        console.log('✅ Saved to database:', savedOrder.id);
 
         // Send to Trello (if configured)
         if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN) {
