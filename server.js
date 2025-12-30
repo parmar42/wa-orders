@@ -121,7 +121,7 @@ app.post('/api/orders', async (req, res) => {
         const { data: savedOrder, error: dbError } = await supabase
             .from('orders')
             .insert([{
-                order_number: orderData.orderNumber || `EM${Date.now()}`,
+                order_number: orderData.orderNumber || `SM${Date.now()}`,
                 customer_name: orderData.customer || orderData.customerName,
                 phone_number: orderData.phone || orderData.phoneNumber,
                 order_source: orderData.source || 'phone',
