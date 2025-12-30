@@ -123,7 +123,7 @@ app.post('/api/orders', async (req, res) => {
     const phoneNumber = orderData.phone || orderData.phoneNumber;
     const orderSource = orderData.source || 'phone';
     const deliveryAddress = orderData.deliveryAddress;
-    const orderItems = Array.isArray(orderData.items) ? JSON.stringify(orderData.items) : JSON.stringify([]);
+    const orderItems = orderData.items;
     const promiseTime = orderData.promiseTime || 20;
 
     const { data: savedOrder, error: dbError } = await supabase
