@@ -45,7 +45,7 @@ app.get('/health', (req, res) => {
 // ============================================
 // LEGACY ENDPOINT - GOOGLE SHEETS / MAKE.COM
 // ============================================
-app.post('/submit-order', async (req, res) => {
+app.post('/api/orders', async (req, res) => {             //app.post('/submit-order', async (req, res) => {
     const orderData = req.body; 
     const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
 
@@ -127,7 +127,7 @@ app.post('/submit-order', async (req, res) => {
 // ============================================
 // NEW ENDPOINT - NODE.JS / SUPABASE
 // ============================================
-app.post('/api/orders', async (req, res) => {
+/*app.post('/api/orders', async (req, res) => {
    const orderData = req.body; 
     const orderNumber = "SM" + Math.floor(1000 + Math.random() * 9000);
 
@@ -205,7 +205,7 @@ app.post('/api/orders', async (req, res) => {
         });
     }
 });
-
+**/
 // ============================================
 // GET ORDERS
 // ============================================
