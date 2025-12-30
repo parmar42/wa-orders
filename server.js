@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
 const http = require('http');
 const { Server } = require('socket.io');
+const { v4: uuidv4 } = require('uuid');
 
 // ============================================
 // INITIALIZE APP & SERVER
@@ -174,6 +175,8 @@ app.get('/health', (req, res) => {
   app.post('/api/orders', async (req, res) => {
    const orderData = req.body; 
     const orderNumber = "SM" + Math.floor(1000 + Math.random() * 9000);
+    // Generate UUID yourself
+    const orderId = uuidv4();
 
     const itemDetails = orderData.orderItems
         .map(item => `${item.name} x${item.quantity}`)
@@ -183,19 +186,26 @@ app.get('/health', (req, res) => {
     const whatsappUpdate = `✅ Order confirmed!\n\n*Order# ${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
     
     // Broadcast to KDS - Legacy format
+
     io.emit('new-kds-order', { 
+        id: orderId, // 👈 your UUID
         orderNumber, 
         ...orderData, 
-        plainTextMessage 
+        plainTextMessage, 
+
     });
+    
+    console.log("📝 Order id generated:", orderId);
     console.log("📢 Legacy order broadcast:", orderNumber);
-    console.log("📝Order Data details list", orderData);
+    console.log("📝 Order Data details list", orderData);
+
 
     try {
         // Save to Supabase
         const { data: savedOrder, error: dbError } = await supabase
             .from('orders')
             .insert([{ 
+                id: orderId, // 👈 your UUID
                 order_number: orderNumber,
                 customer_name: orderData.customerName,
                 phone_number: orderData.phoneNumber,
