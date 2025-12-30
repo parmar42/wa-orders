@@ -125,6 +125,7 @@ app.post('/api/orders', async (req, res) => {
                 customer_name: orderData.customer || orderData.customerName,
                 phone_number: orderData.phone || orderData.phoneNumber,
                 order_source: orderData.source || 'phone',
+                delivery_address: orderData.deliveryAddress,
                 order_items: JSON.stringify(orderData.items || []),
                 promise_time: orderData.promiseTime || 20,
                 status: 'new'
