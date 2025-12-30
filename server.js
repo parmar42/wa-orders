@@ -16,7 +16,7 @@ const io = new Server(server, {
     }
 });
 const PORT = process.env.PORT || 3000;
-
+/*
 // ============================================
 // INITIALIZE SUPABASE
 // ============================================
@@ -32,6 +32,27 @@ if (SUPABASE_URL && SUPABASE_KEY) {
 } else {
   console.error("❌ Supabase URL or Key missing");
 }
+**/
+// Load environment variables
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+
+// Create Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ✅ Log URL and Key prefix
+
+
+// Optional connectivity check
+(async () => {
+  const { data, error } = await supabase.from('orders').select('*').limit(1);
+  if (error) {
+    console.error("❌ Supabase test query failed:", error.message);
+  } else {
+    console.log("✅ Supabase test query succeeded:", data);
+  }
+})();
+
 
 // ============================================
 // MIDDLEWARE
@@ -117,7 +138,7 @@ app.post('/api/orders', async (req, res) => {             //app.post('/submit-or
                 `https://graph.facebook.com/v23.0/${process.env.META_PHONE_ID}/messages`, 
                 {
                     messaging_product: "whatsapp",
-                    to: 12462348400,
+                    to: orderData.phoneNumber,
                     type: "text",
                     text: { body: whatsappUpdate }
                 }, 
