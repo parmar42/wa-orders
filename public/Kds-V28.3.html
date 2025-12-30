@@ -1867,7 +1867,7 @@
         }
     });  // ← Close new_order handler HERE
 
-    // Listen for legacy format
+    /*  // Listen for legacy format
     socket.on('new-kds-order', (data) => {
         console.log('📥 LEGACY ORDER:', data);
         
@@ -1910,7 +1910,7 @@
             console.error('❌ Legacy order error:', error);
         }
     });  // ← Close new-kds-order handler HERE
-
+**/
     // Listen for order status updates from other KDS displays
     socket.on('order_updated', (updateData) => {
         console.log('📡 Order status update received:', updateData);
