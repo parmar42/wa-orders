@@ -25,6 +25,14 @@ const supabase = createClient(
     process.env.SUPABASE_KEY
 );
 
+if (SUPABASE_URL && SUPABASE_KEY) {
+  console.log("✅ Supabase client initialized");
+  console.log("URL:", SUPABASE_URL);
+  console.log("Key prefix:", SUPABASE_KEY.substring(0, 6) + "..."); // only log part of the key
+} else {
+  console.error("❌ Supabase URL or Key missing");
+}
+
 // ============================================
 // MIDDLEWARE
 // ============================================
