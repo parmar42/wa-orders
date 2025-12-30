@@ -1836,7 +1836,7 @@
             }
             
             const newOrder = {
-                id: orderId || Date.now(),
+                id: orderId,
                 number: orderData.orderNumber ? parseInt(orderData.orderNumber.replace(/\D/g, '')) : orderCounter++,
                 source: orderData.source || 'phone',
                 customer: orderData.customer || orderData.customerName || 'Guest',
