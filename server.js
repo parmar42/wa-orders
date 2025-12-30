@@ -99,7 +99,7 @@ app.post('/submit-order', async (req, res) => {
         // Send WhatsApp (if configured)
         if (process.env.META_PHONE_ID && process.env.META_ACCESS_TOKEN) {
             await axios.post(
-                `https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, 
+                `https://graph.facebook.com/v23.0/${process.env.META_PHONE_ID}/messages`, 
                 {
                     messaging_product: "whatsapp",
                     to: 12462348400,
