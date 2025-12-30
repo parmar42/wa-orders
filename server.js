@@ -42,13 +42,6 @@ if (SUPABASE_URL && SUPABASE_KEY) {
 } else {
     console.error("❌ Missing Supabase credentials! Check Render Environment Variables.");
 }
-
-console.log("URL:", SUPABASE_URL);
-  console.log("Key prefix:", SUPABASE_KEY.substring(0, 6) + "..."); // only log part of the key
-} else {
-  console.error("❌ Supabase URL or Key missing");
-}
-
 // Create Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
