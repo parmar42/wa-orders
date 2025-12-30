@@ -1,8 +1,7 @@
 // ============================================
 // 1. GLOBAL CONFIGURATION
 // ============================================
-//const NODEJS_URL = '/api/orders';
-const NODEJS_URL = '/submit-order';
+const NODEJS_URL = '/api/orders';
 const chatNumber = '12462367556'; // Your business WhatsApp number
 let orderItems = [];
 
