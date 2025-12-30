@@ -1464,7 +1464,7 @@
             }
             
             return `
-                <div class="${cardClasses}" data-order-id="${orderId}">
+                <div class="${cardClasses}" data-order-id="${order.id}">
                     <div class="order-header">
                         <div class="order-number-section">
                             <div class="order-number">
@@ -1491,7 +1491,7 @@
                             <div class="order-item">
                                 <div class="item-header">
                                    <div class="item-check ${item.completed ? '' : 'pending'}" 
-                                    data-order-id="${orderId}" 
+                                    data-order-id="${order.id}" 
                                     data-item-index="${idx}">
                                     ${item.completed ? '✓' : '○'}
                                     </div>
@@ -1836,7 +1836,7 @@
             }
             
             const newOrder = {
-                id: orderId,
+                id: orderData.id,
                 number: orderData.orderNumber ? parseInt(orderData.orderNumber.replace(/\D/g, '')) : orderCounter++,
                 source: orderData.source || 'phone',
                 customer: orderData.customer || orderData.customerName || 'Guest',
@@ -1883,7 +1883,7 @@
                 : settings.remotePromiseTime;
 
             const newOrder = {
-                id: orderId,
+                id: orderData.id,
                 number: data.orderNumber ? parseInt(data.orderNumber.replace(/\D/g, '')) : orderCounter++,
                 source: data.orderType ? data.orderType.toLowerCase().replace(' ', '') : 'phone',
                 customer: data.customerName || 'Guest',
