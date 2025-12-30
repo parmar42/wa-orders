@@ -108,9 +108,11 @@ app.get('/health', (req, res) => {
 // ============================================
 // NEW ENDPOINT - NODE.JS / SUPABASE (TAP+SERVE)
 // ============================================
+
 app.post('/api/orders', async (req, res) => {
     try {
         const orderData = req.body;
+        const orderNumber = "EM" + Math.floor(1000 + Math.random() * 9000);
         
         console.log('📥 Received new order:', orderData);
         
@@ -120,7 +122,7 @@ app.post('/api/orders', async (req, res) => {
             .insert([{
                 order_number: orderData.orderNumber || `EM${Date.now()}`,
                 customer_name: orderData.customer || orderData.customerName,
-                
+                phone_number: orderData.phone || orderData.phoneNumber,
                 order_source: orderData.source || 'phone',
                 order_items: JSON.stringify(orderData.items || []),
                 promise_time: orderData.promiseTime || 20,
