@@ -159,7 +159,7 @@ app.post('/api/orders', async (req, res) => {
             customer: savedOrder.customer_name,
             phone: savedOrder.phone_number,
             source: savedOrder.order_source,
-            items: JSON.parse(savedOrder.order_items),
+            items: savedOrder.order_items,
             promiseTime: savedOrder.promise_time,
             status: savedOrder.status,
             createdAt: savedOrder.created_at
