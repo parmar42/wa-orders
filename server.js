@@ -37,16 +37,18 @@ if (SUPABASE_URL && SUPABASE_KEY) {
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
+// Check if Supabase credentials are defined and non-empty
 if (SUPABASE_URL && SUPABASE_KEY) {
     console.log("✅ Supabase credentials loaded successfully from Render Env.");
 } else {
-    console.error("❌ Missing Supabase credentials! Check Render Environment Variables.");
+    console.error("❌ Missing or invalid Supabase credentials! Check Render Environment Variables.");
+    process.exit(1); // Exit the process if credentials are invalid
 }
+
 // Create Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ✅ Log URL and Key prefix
-
 
 // Optional connectivity check
 (async () => {
@@ -57,6 +59,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log("✅ Supabase test query succeeded:", data);
   }
 })();
+
 
 
 // ============================================
