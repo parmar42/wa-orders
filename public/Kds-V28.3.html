@@ -1464,7 +1464,7 @@
             }
             
             return `
-                <div class="${cardClasses}" data-order-id="${order.id}">
+                <div class="${cardClasses}" data-order-id="${newOrder.id}">
                     <div class="order-header">
                         <div class="order-number-section">
                             <div class="order-number">
@@ -1491,7 +1491,7 @@
                             <div class="order-item">
                                 <div class="item-header">
                                    <div class="item-check ${item.completed ? '' : 'pending'}" 
-                                    data-order-id="${order.id}" 
+                                    data-order-id="${newOrder.id}" 
                                     data-item-index="${idx}">
                                     ${item.completed ? '✓' : '○'}
                                     </div>
@@ -1906,6 +1906,7 @@
                 renderOrders();
                 updateLoadIndicator();
                 console.log('✅ Legacy order added!');
+                console.log('🆔 Extracted', newOrder.id);
             }
             
         } catch (error) {
