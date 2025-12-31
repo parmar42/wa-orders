@@ -1898,7 +1898,7 @@
                 : settings.remotePromiseTime;
 
             const newOrder = {
-                id: data.Id,
+                id: data.id,
                 number: data.orderNumber ? parseInt(data.orderNumber.replace(/\D/g, '')) : orderCounter++,
                 source: data.orderType ? data.orderType.toLowerCase().replace(' ', '') : 'phone',
                 customer: data.customerName || 'Guest',
