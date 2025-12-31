@@ -185,18 +185,10 @@ app.get('/health', (req, res) => {
     const plainTextMessage = `*Order #${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
     const whatsappUpdate = `✅ Order confirmed!\n\n*Order# ${orderNumber}*\n\nItems:\n${itemDetails}\n\nTotal: ${orderData.totalAmount}\nType: ${orderData.orderType}`;
     
-    // Broadcast to KDS - Legacy format
-
-    io.emit('new-kds-order', { 
-        id: orderId, // 👈 your UUID
-        orderNumber, 
-        ...orderData, 
-        plainTextMessage, 
-
-    });
+    
     
     console.log("📝 Order id generated:", orderId);
-    console.log("📢 Legacy order broadcast:", orderNumber);
+    console.log("📢 New order broadcast:", orderNumber);
     console.log("📝 Order Data details list", orderData);
 
 
@@ -220,6 +212,16 @@ app.get('/health', (req, res) => {
             .single();
 
         if (dbError) throw dbError;
+
+        // Broadcast to KDS - Legacy format
+
+        io.emit('new-kds-order', { 
+            id: orderId, // 👈 your UUID
+            orderNumber, 
+            ...orderData, 
+            plainTextMessage, 
+
+        });
 
         // Send to Trello (if configured)
         if (process.env.TRELLO_KEY && process.env.TRELLO_TOKEN) {
