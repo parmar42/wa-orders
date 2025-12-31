@@ -213,45 +213,29 @@
         }
 
         /* Order Card */
-       /* UPDATED: Order Card - Standardized width to prevent glitching */
         .order-card {
-            width: 300px; /* Force a fixed width so cards don't "flicker" or resize */
+            min-width: 300px;
+            max-width: 300px;
             background: #fff;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s ease;
-            position: relative; /* Essential for the floating lock badge */
-            border: 2px solid transparent; /* Placeholder to prevent jumping when locked */
+            transition: all 0.3s;
+            position: relative;
         }
 
-        /* UPDATED: Lock Badge - Positioned absolutely to float over the card */
-        .lock-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: #ffd700;
-            color: #000;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 900;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            pointer-events: none; /* Clicks go through the badge to the card */
-        }
-
-        /* UPDATED: Locked State - Uses border-color instead of adding a new border */
         .order-card.locked {
-            border: 4px solid #ff0000 !important;
+            border: 4px solid #ff0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.466);
             animation: glow 2s infinite;
         }
 
         @keyframes glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.3); }
-            50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.6); }
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
         }
 
         .order-card.gap-opportunity {
@@ -1256,11 +1240,15 @@
     }
 
     function updateTimers() {
-        const now = Date.now();
-        let needsFullRender = false;
-        
-        orders.forEach(order => {
-            order.timer = Math.floor((now - order.startTime) / 1000);
+    orders.forEach(order => {
+        order.timer++;
+        const timerEl = document.querySelector(`#order-${order.id} .timer`);
+        if (timerEl) {
+        timerEl.textContent = formatTimer(order.timer);
+        }
+    });
+    }
+    setInterval(updateTimers, 1000);
             
             if (settings.anchoring && !order.locked && order.source !== 'walkin') {
                 const elapsed = order.timer / 60;
@@ -1278,7 +1266,7 @@
                 playSound('overdue');
                 needsFullRender = true;  // Overdue status changed - need full render
             }
-        });
+      
         
         // Only full re-render if lock or overdue status changed
         if (needsFullRender) {
@@ -1287,7 +1275,7 @@
             // Just update timer displays without re-rendering
             updateTimerDisplays();
         }
-    }
+    
 
     // NEW FUNCTION: Update only timer elements
     function updateTimerDisplays() {
@@ -1437,73 +1425,137 @@
     // RENDER ORDERS
     // ============================================
 
-        function renderOrders() {
+    function renderOrders() {
         const container = document.getElementById('ordersContainer');
-        if (!container) return;
-
-        const filteredOrders = orders.filter(order => {
-            if (currentFilter === 'all') return order.status !== 'completed';
-            if (['whatsapp', 'phone', 'walkin'].includes(currentFilter)) {
-                return order.source === currentFilter && order.status !== 'completed';
-            }
-            return order.status === currentFilter;
-        });
-
+        let filteredOrders = orders;
+        
+        // Apply filters
+        if (currentFilter === 'new') {
+            filteredOrders = orders.filter(o => o.status === 'new');
+        } else if (currentFilter === 'preparing') {
+            filteredOrders = orders.filter(o => o.status === 'preparing');
+        } else if (currentFilter === 'ready') {
+            filteredOrders = orders.filter(o => o.status === 'ready');
+        } else if (['whatsapp', 'phone', 'walkin'].includes(currentFilter)) {
+            filteredOrders = orders.filter(o => o.source === currentFilter);
+        }
+         
+        // Apply weighted queueing sort
+        if (settings.weightedQueue) {
+            filteredOrders = applyWeightedQueue(filteredOrders);
+        } else {
+            filteredOrders.sort((a, b) => a.startTime - b.startTime);
+        }
+        
         if (filteredOrders.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🍽️</div>
                     <div>No orders to display</div>
-                </div>`;
+                </div>
+            `;
             return;
         }
-
-        container.innerHTML = filteredOrders.map(order => `
-            <div class="order-card ${order.status} ${order.source} ${order.locked ? 'locked' : ''}" id="order-${order.id}">
-                
-                ${order.locked ? '<div class="lock-badge">🔒 ANCHORED</div>' : ''}
-                
-                <div class="order-header">
-                    <div class="order-number-section">
-                        <div class="order-number">#${order.orderNumber}</div>
-                        <div class="order-source">${getSourceIcon(order.source)} ${order.source.toUpperCase()}</div>
-                    </div>
-                    <div class="timer-section">
-                        <div class="timer ${getTimerClass(order.timer)}">${formatTimer(order.timer)}</div>
-                        <div class="promise-time">Due: ${formatTime(order.promiseTime)}</div>
-                    </div>
-                </div>
-
-                <div class="customer-info">
-                    <div class="customer-name">👤 ${order.customer}</div>
-                </div>
-
-                <div class="order-items">
-                    ${order.items.map((item, idx) => `
-                        <div class="order-item">
-                            <div class="item-header">
-                                <div class="item-check ${item.completed ? '' : 'pending'}" 
-                                    onclick="toggleItem(${order.id}, ${idx})">
-                                    ${item.completed ? '✓' : ''}
-                                </div>
-                                <div class="item-name">${item.name}</div>
-                                <div class="item-quantity">x${item.quantity}</div>
+        
+        container.innerHTML = filteredOrders.map(order => {
+            const elapsed = order.timer / 60;
+            const isOverdue = elapsed > order.promiseTime;
+            const progress = (elapsed / order.promiseTime) * 100;
+            
+            let timerClass = 'normal';
+            if (progress >= 90) timerClass = 'critical';
+            else if (progress >= 75) timerClass = 'warning';
+            
+            let cardClasses = `order-card ${order.source} ${order.status}`;
+            if (order.locked) cardClasses += ' locked';
+            if (isOverdue) cardClasses += ' overdue';
+            
+            let actionButtons = '';
+            if (order.status === 'new') {
+                actionButtons = `<button class="action-btn btn-start">Start Cooking</button>`;
+            } else if (order.status === 'preparing') {
+                actionButtons = `<button class="action-btn btn-ready">Mark Ready</button>`;
+            } else if (order.status === 'ready') {
+                actionButtons = `<button class="action-btn btn-complete">Complete</button>`;
+            }
+            
+            return `
+                <div class="${cardClasses}" data-order-id="${order.id}">
+                     <div class="order-header">
+                        <div class="order-number-section">
+                            <div class="order-number">
+                                ${order.orderNumber}
+                                ${order.locked ? '<span class="lock-badge">🔒 LOCKED</span>' : ''}
+                            </div>
+                            <div class="order-source">
+                                ${order.source === 'whatsapp' ? '💬' : order.source === 'phone' ? '📞' : '🚶'} ${order.source.toUpperCase()}
                             </div>
                         </div>
-                    `).join('')}
+                        <div class="timer-section">
+                            <div class="timer ${timerClass}">${formatTimer(order.timer)}</div>
+                            <div class="promise-time">Promise: ${order.promiseTime} min</div>
+                        </div>
+                    </div>
+                    
+                    <div class="customer-info">
+                        <div class="customer-name">👤 ${order.customer}</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">${order.phone}</div>
+                    </div>
+                    
+                    <div class="order-items">
+                        ${order.items.map((item, idx) => `
+                            <div class="order-item">
+                                <div class="item-header">
+                                   <div class="item-check ${item.completed ? '' : 'pending'}" 
+                                    data-order-id="${order.id}" 
+                                    data-item-index="${idx}">
+                                    ${item.completed ? '✓' : '○'}
+                                    </div>
+                                    <div class="item-name">${item.name}</div>
+                                    <div class="item-quantity">${item.quantity}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="order-actions">
+                        ${actionButtons}
+                    </div>
                 </div>
+            `;
+        }).join('');
 
-                <div class="order-actions">
-                    ${order.status === 'new' ? 
-                        `<button class="action-btn btn-start" onclick="updateOrderStatus(${order.id}, 'preparing')">Start</button>` : ''}
-                    ${order.status === 'preparing' ? 
-                        `<button class="action-btn btn-ready" onclick="updateOrderStatus(${order.id}, 'ready')">Ready</button>` : ''}
-                    ${order.status === 'ready' ? 
-                        `<button class="action-btn btn-complete" onclick="updateOrderStatus(${order.id}, 'completed')">Complete</button>` : ''}
-                </div>
-            </div>
-        `).join('');
+        attachButtonListeners();
+        
     }
+
+    function attachButtonListeners() {
+        document.querySelectorAll('.btn-start').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.order-card');
+                const orderId = card.dataset.orderId;
+                console.log('🟢 Start clicked for order:', orderId);
+                changeStatus(orderId, 'preparing');
+            });
+        });
+    
+        document.querySelectorAll('.btn-ready').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.order-card');
+                const orderId = card.dataset.orderId;
+                console.log('🟠 Ready clicked for order:', orderId);
+                changeStatus(orderId, 'ready');
+            });
+        });
+    
+        document.querySelectorAll('.btn-complete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.order-card');
+                const orderId = card.dataset.orderId;
+                console.log('🔵 Complete clicked for order:', orderId);
+                changeStatus(orderId, 'completed');
+            });
+        });
     
 
         // ADD THIS: Item checkboxes
@@ -1522,7 +1574,7 @@
             'buttons and',
             document.querySelectorAll('.item-check').length,
             'checkboxes');
-    
+    }
     
     
     function applyWeightedQueue(ordersArray) {
