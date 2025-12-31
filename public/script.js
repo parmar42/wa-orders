@@ -3,7 +3,8 @@
 // ============================================
 const NODEJS_URL = '/api/orders';
 //const NODEJS_URL = '/submit-order';
-const chatNumber = process.env.CHAT_NUMBER;
+const CHAT_NUMBER = process.env.CHAT_NUMBER;
+const chatNumber = CHAT_NUMBER
 //const chatNumber = '12462367556'; // Your business WhatsApp number
 let orderItems = [];
 
