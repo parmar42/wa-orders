@@ -209,33 +209,50 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
             padding: 10px;
+            /* No max-height! */
         }
 
-        /* Order Card - FIXED FOR GLITCHING */
+        /* Order Card */
         .order-card {
-            min-width: 300px;
-            max-width: 300px;
+            width: 100%; /* Changed from min/max width to 100% of grid cell */
             background: #fff;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            transition: all 0.3s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Smoother transition */
             position: relative;
-            /* CRITICAL: Prevent layout shifts */
-            contain: layout style paint;
-            will-change: transform;
-            transform: translateZ(0);
+            border: 1px solid #ddd; /* Base border to prevent size jump when locked */
+        }
+
+        .lock-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ffd700;
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 900;
+            z-index: 5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            pointer-events: none; /* Allows clicks to pass through to buttons below */
         }
 
         .order-card.locked {
-            border: 4px solid #ff0000;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.466);
+            border: 4px solid #ff0000 !important; /* Force border so card size doesn't change */
             animation: glow 2s infinite;
-            /* Ensure locked state doesn't cause layout shift */
-            transform: translateZ(0);
+        }
+
+        /* Grid fix to keep cards steady */
+        .orders-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            align-items: start; /* Prevents cards from stretching vertically */
         }
 
         @keyframes glow {
@@ -311,7 +328,6 @@
             color: #666;
         }
 
-        /* FIXED: Lock badge - no more jumping */
         .lock-badge {
             background: #ffd700;
             color: #000;
@@ -321,13 +337,6 @@
             font-weight: 700;
             display: inline-block;
             margin-left: 6px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            transform: translateZ(0);
-        }
-
-        .lock-badge.visible {
-            opacity: 1;
         }
 
         .timer-section {
@@ -1085,151 +1094,27 @@
         console.log('✅ Authenticated - loading KDS...');
     })();
 
-    // ============================================
-    // UTILITY FUNCTIONS - PREVENT GLITCHING
-    // ============================================
-
-    // Debounce function - prevents functions from being called too frequently
-    const debounce = (func, wait) => {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    };
-
-    // Throttle function - ensures function runs at most once per time period
-    const throttle = (func, limit) => {
-        let inThrottle;
-        return function(...args) {
-            if (!inThrottle) {
-                func.apply(this, args);
-                inThrottle = true;
-                setTimeout(() => inThrottle = false, limit);
-            }
-        };
-    };
-
-    // ============================================
-    // CARD STATE MANAGER - PREVENTS GLITCHING
-    // ============================================
-
-    class CardStateManager {
-        constructor() {
-            this.cardStates = new Map(); // Stores the current state of each card
-            this.updateQueue = []; // Queue for pending updates
-            this.isProcessing = false; // Flag to prevent concurrent processing
-        }
-
-        // Store the lock state for a specific order
-        setCardState(orderId, isLocked) {
-            this.cardStates.set(orderId, {
-                isLocked: isLocked,
-                timestamp: Date.now()
-            });
-        }
-
-        // Get the current lock state for an order
-        getCardState(orderId) {
-            return this.cardStates.get(orderId);
-        }
-
-        // Add an update to the queue
-        queueUpdate(orderId, isLocked) {
-            this.updateQueue.push({ 
-                orderId: orderId, 
-                isLocked: isLocked, 
-                timestamp: Date.now() 
-            });
-            this.processQueue();
-        }
-
-        // Process updates one at a time
-        async processQueue() {
-            if (this.isProcessing || this.updateQueue.length === 0) {
-                return; // Don't process if already processing or queue is empty
-            }
-            
-            this.isProcessing = true;
-            const update = this.updateQueue.shift(); // Get first update from queue
-            
-            try {
-                await this.applyUpdate(update);
-            } catch (error) {
-                console.error('Error applying update:', error);
-            } finally {
-                this.isProcessing = false;
-                // Process next update if queue has more
-                if (this.updateQueue.length > 0) {
-                    setTimeout(() => this.processQueue(), 50);
-                }
-            }
-        }
-
-        // Apply a single update to a card
-        async applyUpdate(update) {
-            const { orderId, isLocked } = update;
-            const currentState = this.getCardState(orderId);
-            
-            // Ignore stale updates (older than current state)
-            if (currentState && update.timestamp < currentState.timestamp) {
-                console.log(`Ignoring stale update for order ${orderId}`);
-                return;
-            }
-            
-            this.setCardState(orderId, isLocked);
-            this.updateCardUI(orderId, isLocked);
-        }
-
-        // Update the card's visual appearance
-        updateCardUI(orderId, isLocked) {
-            const card = document.querySelector(`[data-order-id="${orderId}"]`);
-            if (!card) {
-                console.warn(`Card not found for order ${orderId}`);
-                return;
-            }
-
-            // Use requestAnimationFrame to sync with browser paint
-            requestAnimationFrame(() => {
-                const lockBadge = card.querySelector('.lock-badge');
-                
-                if (!lockBadge) {
-                    console.warn(`Lock badge not found for order ${orderId}`);
-                    return;
-                }
-                
-                // Apply smooth transition
-                card.style.transition = 'all 0.3s ease';
-                
-                if (isLocked) {
-                    // Show lock indicator
-                    lockBadge.classList.add('visible');
-                    card.classList.add('locked');
-                    card.setAttribute('data-locked', 'true');
-                } else {
-                    // Hide lock indicator
-                    lockBadge.classList.remove('visible');
-                    card.classList.remove('locked');
-                    card.setAttribute('data-locked', 'false');
-                }
-            });
-        }
-    }
-
-    // Create a single instance to use throughout the app
-    const cardStateManager = new CardStateManager();
 
     // ============================================
     // CONFIGURATION & STATE
     // ============================================
 
+    function handleNewOrderData(data) {
+        console.log('New order data received:', data);
+        // Process the new order data as needed
+        const event = new CustomEvent('orderDataUpdated', {
+            detail: {orderId: data.orderId
+        }       
+     });
+     document.dispatchEvent(event);
+
+    }
+
+
     const CONFIG = {
         APPS_SCRIPT_URL: '',  // Not using
         NODEJS_URL: 'https://wa-orders.onrender.com',
+      //WHATSAPP_API: '',  // Not using
     };
 
     let orders = [];
@@ -1371,18 +1256,10 @@
         };
 
         orders.push(order);
-        
-        // Initialize card state in manager
-        cardStateManager.setCardState(order.id, false);
-        
         playSound('new');
         renderOrders();
         updateLoadIndicator();
     }
-
-    // ============================================
-    // UPDATE TIMERS - WITH GLITCH PREVENTION
-    // ============================================
 
     function updateTimers() {
         const now = Date.now();
@@ -1397,12 +1274,8 @@
                 
                 if (elapsed >= lockTime) {
                     order.locked = true;
-                    
-                    // Use CardStateManager to update lock status smoothly
-                    cardStateManager.queueUpdate(order.id, true);
-                    
                     playSound('lock');
-                    // Don't trigger full render - CardStateManager handles it
+                    needsFullRender = true;  // Lock status changed - need full render
                 }
             }
             
@@ -1413,7 +1286,7 @@
             }
         });
         
-        // Only full re-render if overdue status changed
+        // Only full re-render if lock or overdue status changed
         if (needsFullRender) {
             renderOrders();
         } else {
@@ -1422,7 +1295,7 @@
         }
     }
 
-    // Update only timer elements - no full re-render
+    // NEW FUNCTION: Update only timer elements
     function updateTimerDisplays() {
         orders.forEach(order => {
             const orderCard = document.querySelector(`[data-order-id="${order.id}"]`);
@@ -1471,65 +1344,81 @@
         if (settings.throttleWA && loadPercentage >= settings.loadTrigger) {
             throttleSystem();
         }
-    }
-    
     function throttleSystem() {
-        // Disabled - WhatsApp API not configured
+    // Disabled - WhatsApp API not configured
         console.log('⚠️ Throttle system disabled');
     }
+    }
 
+   /* function throttleSystem() {
+        console.log('🚨 Kitchen overloaded - Throttling promise times');
+        
+        if (settings.throttleWA) {
+            fetch(CONFIG.WHATSAPP_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update_promise_time',
+                    newTime: settings.remotePromiseTime + settings.delayPadding
+                })
+            }).catch(e => console.error('Throttle update failed:', e));
+        }
+        
+        playSound('load');
+    }
+    **/
     // ============================================
     // ORDER STATUS CHANGE - WITH DATABASE SYNC
     // ============================================
 
     async function changeStatus(orderId, newStatus) {
-        console.log('🔘 Status change requested');
-        console.log('Order ID:', orderId);
-        console.log('New Status:', newStatus);
+    console.log('🔘 BUTTON CLICKED!');
+    console.log('Order ID:', orderId);
+    console.log('New Status:', newStatus);
+    console.log('Orders array:', orders);
+    
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        console.error('❌ Order not found! ID:', orderId);
+        console.log('Available order IDs:', orders.map(o => o.id));
+        return;
+    }
+    
+    console.log(`📝 Found order: ${order.orderNumber || order.number}`);
+    console.log(`   Current status: ${order.status}`);
+    console.log(`   Changing to: ${newStatus}`);
+    
+    order.status = newStatus;
+    
+    // Update in Supabase
+    if (settings.nodejs && order.orderNumber) {
+        console.log('💾 Updating in Supabase...');
+         await updateOrderStatusInSupabase(order.id, newStatus);  // ← Use UUID instead
+    }
+    
+    if (newStatus === 'completed') {
+        completedToday++;
         
-        const order = orders.find(o => o.id == orderId);
-        
-        if (!order) {
-            console.error('❌ Order not found! ID:', orderId);
-            console.log('Available order IDs:', orders.map(o => o.id));
-            return;
+        const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+        if (orderCard) {
+            orderCard.style.opacity = '0.5';
+            orderCard.style.transition = 'opacity 0.5s';
         }
         
-        console.log(`📝 Found order: ${order.orderNumber || order.number}`);
-        console.log(`   Current status: ${order.status}`);
-        console.log(`   Changing to: ${newStatus}`);
-        
-        order.status = newStatus;
-        
-        // Update in Supabase
-        if (settings.nodejs && order.id) {
-            console.log('💾 Updating in Supabase...');
-            await updateOrderStatusInSupabase(order.id, newStatus);
-        }
-        
-        if (newStatus === 'completed') {
-            completedToday++;
-            
-            const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
-            if (orderCard) {
-                orderCard.style.opacity = '0.5';
-                orderCard.style.transition = 'opacity 0.5s';
-            }
-            
-            setTimeout(() => {
-                orders = orders.filter(o => o.id != orderId);
-                renderOrders();
-                updateLoadIndicator();
-            }, 2000);
-        } else {
-            console.log('🎨 Re-rendering orders...');
+        setTimeout(() => {
+            orders = orders.filter(o => o.id !== orderId);
             renderOrders();
             updateLoadIndicator();
-        }
-        
-        console.log('✅ changeStatus complete!');
+        }, 2000);
+    } else {
+        console.log('🎨 Re-rendering orders...');
+        renderOrders();
+        updateLoadIndicator();
     }
-
+    
+    console.log('✅ changeStatus complete!');
+    }
     async function updateOrderStatusInSupabase(orderId, newStatus) {
         try {
             console.log(`🔄 Updating ${orderId} to ${newStatus} in Supabase...`);
@@ -1551,213 +1440,77 @@
     }
 
     // ============================================
-    // RENDER ORDERS - OPTIMIZED TO PREVENT GLITCHING
+    // RENDER ORDERS
     // ============================================
 
     function renderOrders() {
-        const container = document.getElementById('ordersContainer');
-        
-        // Store current scroll position to restore later
-        const scrollPos = container.scrollTop;
-        
-        let filteredOrders = orders;
-        
-        // Apply filters
-        if (currentFilter === 'new') {
-            filteredOrders = orders.filter(o => o.status === 'new');
-        } else if (currentFilter === 'preparing') {
-            filteredOrders = orders.filter(o => o.status === 'preparing');
-        } else if (currentFilter === 'ready') {
-            filteredOrders = orders.filter(o => o.status === 'ready');
-        } else if (['whatsapp', 'phone', 'walkin'].includes(currentFilter)) {
-            filteredOrders = orders.filter(o => o.source === currentFilter);
+    const container = document.getElementById('ordersContainer');
+    if (!container) return;
+
+    // Keep your existing filtering logic here
+    const filteredOrders = orders.filter(order => {
+        if (currentFilter === 'all') return order.status !== 'completed';
+        if (['whatsapp', 'phone', 'walkin'].includes(currentFilter)) {
+            return order.source === currentFilter && order.status !== 'completed';
         }
-         
-        // Apply weighted queueing sort
-        if (settings.weightedQueue) {
-            filteredOrders = applyWeightedQueue(filteredOrders);
-        } else {
-            filteredOrders.sort((a, b) => a.startTime - b.startTime);
-        }
-        
-        if (filteredOrders.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🍽️</div>
-                    <div>No orders to display</div>
-                </div>
-            `;
-            return;
-        }
-        
-        // Get all currently displayed order IDs
-        const existingOrderIds = new Set(
-            Array.from(container.querySelectorAll('[data-order-id]'))
-                .map(card => card.dataset.orderId)
-        );
-        
-        // Update or create cards
-        filteredOrders.forEach(order => {
-            const existingCard = container.querySelector(`[data-order-id="${order.id}"]`);
-            
-            if (existingCard) {
-                // Card exists - update it without recreating
-                updateCard(existingCard, order);
-            } else {
-                // Card doesn't exist - create new one
-                const newCard = createOrderCard(order);
-                container.appendChild(newCard);
-            }
-        });
-        
-        // Remove orders that no longer exist
-        const currentOrderIds = new Set(filteredOrders.map(o => o.id));
-        existingOrderIds.forEach(id => {
-            if (!currentOrderIds.has(id)) {
-                const card = container.querySelector(`[data-order-id="${id}"]`);
-                if (card) {
-                    // Fade out before removing
-                    card.style.opacity = '0';
-                    setTimeout(() => card.remove(), 200);
-                }
-            }
-        });
-        
-        // Restore scroll position
-        requestAnimationFrame(() => {
-            container.scrollTop = scrollPos;
-        });
-        
-        // Reattach button listeners
-        attachButtonListeners();
+        return order.status === currentFilter;
+    });
+
+    if (filteredOrders.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🍽️</div>
+                <div>No orders to display</div>
+            </div>`;
+        return;
     }
 
-    // ============================================
-    // CREATE ORDER CARD - WITH PROPER STRUCTURE
-    // ============================================
-
-    function createOrderCard(order) {
-        const elapsed = order.timer / 60;
-        const isOverdue = elapsed > order.promiseTime;
-        const progress = (elapsed / order.promiseTime) * 100;
-        
-        let timerClass = 'normal';
-        if (progress >= 90) timerClass = 'critical';
-        else if (progress >= 75) timerClass = 'warning';
-        
-        let cardClasses = `order-card ${order.source} ${order.status}`;
-        if (order.locked) cardClasses += ' locked';
-        if (isOverdue) cardClasses += ' overdue';
-        
-        let actionButtons = '';
-        if (order.status === 'new') {
-            actionButtons = `<button class="action-btn btn-start">Start Cooking</button>`;
-        } else if (order.status === 'preparing') {
-            actionButtons = `<button class="action-btn btn-ready">Mark Ready</button>`;
-        } else if (order.status === 'ready') {
-            actionButtons = `<button class="action-btn btn-complete">Complete</button>`;
-        }
-        
-        const card = document.createElement('div');
-        card.className = cardClasses;
-        card.setAttribute('data-order-id', order.id);
-        card.setAttribute('data-locked', order.locked ? 'true' : 'false');
-        
-        // Initialize card state in manager
-        cardStateManager.setCardState(order.id, order.locked || false);
-        
-        card.innerHTML = `
+    container.innerHTML = filteredOrders.map(order => `
+        <div class="order-card ${order.status} ${order.source} ${order.locked ? 'locked' : ''}" id="order-${order.id}">
+            
+            ${order.locked ? '<div class="lock-badge">🔒 ANCHORED</div>' : ''}
+            
             <div class="order-header">
                 <div class="order-number-section">
-                    <div class="order-number">
-                        ${order.orderNumber}
-                        <span class="lock-badge ${order.locked ? 'visible' : ''}">🔒 LOCKED</span>
-                    </div>
-                    <div class="order-source">
-                        ${order.source === 'whatsapp' ? '💬' : order.source === 'phone' ? '📞' : '🚶'} ${order.source.toUpperCase()}
-                    </div>
+                    <div class="order-number">#${order.orderNumber}</div>
+                    <div class="order-source">${getSourceIcon(order.source)} ${order.source.toUpperCase()}</div>
                 </div>
                 <div class="timer-section">
-                    <div class="timer ${timerClass}">${formatTimer(order.timer)}</div>
-                    <div class="promise-time">Promise: ${order.promiseTime} min</div>
+                    <div class="timer ${getTimerClass(order.timer)}">${formatTimer(order.timer)}</div>
+                    <div class="promise-time">Due: ${formatTime(order.promiseTime)}</div>
                 </div>
             </div>
             
             <div class="customer-info">
                 <div class="customer-name">👤 ${order.customer}</div>
-                <div style="font-size: 12px; color: #999; margin-top: 4px;">${order.phone}</div>
             </div>
-            
+
             <div class="order-items">
                 ${order.items.map((item, idx) => `
                     <div class="order-item">
                         <div class="item-header">
                             <div class="item-check ${item.completed ? '' : 'pending'}" 
-                                data-order-id="${order.id}" 
-                                data-item-index="${idx}">
-                                ${item.completed ? '✓' : '○'}
+                                 onclick="toggleItem(${order.id}, ${idx})">
+                                ${item.completed ? '✓' : ''}
                             </div>
                             <div class="item-name">${item.name}</div>
-                            <div class="item-quantity">${item.quantity}</div>
+                            <div class="item-quantity">x${item.quantity}</div>
                         </div>
                     </div>
                 `).join('')}
             </div>
-            
+
             <div class="order-actions">
-                ${actionButtons}
+                ${order.status === 'new' ? 
+                    `<button class="action-btn btn-start" onclick="updateOrderStatus(${order.id}, 'preparing')">Start</button>` : ''}
+                ${order.status === 'preparing' ? 
+                    `<button class="action-btn btn-ready" onclick="updateOrderStatus(${order.id}, 'ready')">Ready</button>` : ''}
+                ${order.status === 'ready' ? 
+                    `<button class="action-btn btn-complete" onclick="updateOrderStatus(${order.id}, 'completed')">Complete</button>` : ''}
             </div>
-        `;
-        
-        return card;
-    }
-
-    // ============================================
-    // UPDATE CARD - PREVENT UNNECESSARY RE-RENDERS
-    // ============================================
-
-    function updateCard(cardElement, order) {
-        const currentState = cardStateManager.getCardState(order.id);
-        const isCurrentlyLocked = currentState ? currentState.isLocked : false;
-        
-        // Only update lock state if it actually changed
-        if (order.locked !== isCurrentlyLocked) {
-            cardStateManager.queueUpdate(order.id, order.locked);
-        }
-        
-        // Update other card content without touching lock indicator
-        const timerElement = cardElement.querySelector('.timer');
-        const sourceElement = cardElement.querySelector('.order-source');
-        const itemsContainer = cardElement.querySelector('.order-items');
-        
-        // Update timer if changed
-        if (timerElement) {
-            const newTimerText = formatTimer(order.timer);
-            if (timerElement.textContent !== newTimerText) {
-                timerElement.textContent = newTimerText;
-            }
-            
-            // Update timer color class
-            const elapsed = order.timer / 60;
-            const progress = (elapsed / order.promiseTime) * 100;
-            
-            timerElement.className = 'timer';
-            if (progress >= 90) {
-                timerElement.classList.add('critical');
-            } else if (progress >= 75) {
-                timerElement.classList.add('warning');
-            } else {
-                timerElement.classList.add('normal');
-            }
-        }
-        
-        // Update card classes if status changed
-        const expectedClasses = `order-card ${order.source} ${order.status}`;
-        if (cardElement.className !== expectedClasses) {
-            cardElement.className = expectedClasses;
-            if (order.locked) cardElement.classList.add('locked');
-        }
-    }
+        </div>
+    `).join('');
+}
 
     function attachButtonListeners() {
         document.querySelectorAll('.btn-start').forEach(btn => {
@@ -1786,8 +1539,9 @@
                 changeStatus(orderId, 'completed');
             });
         });
+    
 
-        // Item checkboxes
+        // ADD THIS: Item checkboxes
         document.querySelectorAll('.item-check').forEach(checkbox => {
             checkbox.addEventListener('click', (e) => {
                 const orderId = e.target.dataset.orderId;
@@ -1805,6 +1559,7 @@
             'checkboxes');
     }
     
+    
     function applyWeightedQueue(ordersArray) {
         const locked = ordersArray.filter(o => o.locked);
         const unlocked = ordersArray.filter(o => !o.locked);
@@ -1819,7 +1574,7 @@
     }
 
     function toggleItemComplete(orderId, itemIndex) {
-        const order = orders.find(o => o.id == orderId);
+        const order = orders.find(o => o.id === orderId);
         if (order) {
             order.items[itemIndex].completed = !order.items[itemIndex].completed;
             renderOrders();
@@ -2029,7 +1784,7 @@
     }
 
     // ============================================
-    // SOCKET.IO CONNECTION - WITH DEBOUNCING
+    // SOCKET.IO CONNECTION
     // ============================================
 
     const socket = io(CONFIG.NODEJS_URL, {
@@ -2063,8 +1818,11 @@
         console.error('❌ Socket Connection Error:', error.message);
     });
 
-    // Debounced handler for new orders
-    const handleNewOrder = debounce((receivedData) => {
+    //===========================================
+    // Listen for new orders (Tap+Serve format)
+    //===========================================
+    /*
+    socket.on('new_order', (receivedData) => {
         console.log('🎯 NEW ORDER EVENT:', receivedData);
         
         try {
@@ -2098,10 +1856,6 @@
             if (existingIndex === -1) {
                 console.log('📊 Adding order:', newOrder.orderNumber);
                 orders.push(newOrder);
-                
-                // Initialize card state
-                cardStateManager.setCardState(newOrder.id, false);
-                
                 playSound('new');
                 renderOrders();
                 updateLoadIndicator();
@@ -2113,9 +1867,9 @@
         } catch (error) {
             console.error('❌ Error processing order:', error);
         }
-    }, 100);
-
-    // Listen for legacy format
+    });  // ← Close new_order handler HERE
+        **/
+        // Listen for legacy format
     socket.on('new-kds-order', (data) => {
         console.log('📥 LEGACY ORDER:', data);
         
@@ -2145,23 +1899,23 @@
                 orderNumber: data.orderNumber
             };
 
+                
+
             const existingIndex = orders.findIndex(o => o.orderNumber === newOrder.orderNumber);
             if (existingIndex === -1) {
                 orders.push(newOrder);
-                
-                // Initialize card state
-                cardStateManager.setCardState(newOrder.id, false);
-                
                 playSound('new');
                 renderOrders();
                 updateLoadIndicator();
                 console.log('✅ Legacy order added!');
+                console.log('🆔 Order ID extracted from newOrder.id:', newOrder.id);
             }
             
         } catch (error) {
             console.error('❌ Legacy order error:', error);
         }
-    });
+    });  // ← Close new-kds-order handler HERE
+    
     
     // Listen for order status updates from other KDS displays
     socket.on('order_updated', (updateData) => {
@@ -2200,7 +1954,9 @@
         } catch (error) {
             console.error('❌ Error processing status update:', error);
         }
-    });
+    });  
+    
+    // ← Close order_updated handler HERE
 
     // ============================================
     // LOGOUT FUNCTION  
@@ -2225,7 +1981,20 @@
         }
     }, 1000);
 
-    console.log('🍜 Tap+Serve KDS Initialized with Glitch Prevention');
+    console.log('🍜 Tap+Serve KDS Initialized');
+
+    document.addEventListener('orderDataUpdated', (event) => {
+    const orderId = event.detail.id;
+    const buttons = document.querySelectorAll(`action-btn btn-start[data-order-id="${orderId}"], 
+            action-btn btn-ready[data-order-id="${orderId}"], action-btn btn-complete[data-order-id="${orderId}"],
+            item-check[data-order-id="${orderId}"]`
+        );
+            buttons.forEach(btn => btn.disabled = false);
+        console.log(`Order Id dfined: ${orderId}`);   
+        
+    });
+
+
 
     </script>
 </body>
