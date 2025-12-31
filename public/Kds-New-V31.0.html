@@ -213,51 +213,45 @@
         }
 
         /* Order Card */
+       /* UPDATED: Order Card - Standardized width to prevent glitching */
         .order-card {
-            width: 100%; /* Changed from min/max width to 100% of grid cell */
+            width: 300px; /* Force a fixed width so cards don't "flicker" or resize */
             background: #fff;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Smoother transition */
-            position: relative;
-            border: 1px solid #ddd; /* Base border to prevent size jump when locked */
+            transition: transform 0.2s ease;
+            position: relative; /* Essential for the floating lock badge */
+            border: 2px solid transparent; /* Placeholder to prevent jumping when locked */
         }
 
+        /* UPDATED: Lock Badge - Positioned absolutely to float over the card */
         .lock-badge {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 8px;
+            right: 8px;
             background: #ffd700;
             color: #000;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 10px;
             font-weight: 900;
-            z-index: 5;
+            z-index: 10;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            pointer-events: none; /* Allows clicks to pass through to buttons below */
+            pointer-events: none; /* Clicks go through the badge to the card */
         }
 
+        /* UPDATED: Locked State - Uses border-color instead of adding a new border */
         .order-card.locked {
-            border: 4px solid #ff0000 !important; /* Force border so card size doesn't change */
+            border: 4px solid #ff0000 !important;
             animation: glow 2s infinite;
         }
 
-        /* Grid fix to keep cards steady */
-        .orders-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-            align-items: start; /* Prevents cards from stretching vertically */
-        }
-
         @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
-            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.6); }
         }
 
         .order-card.gap-opportunity {
@@ -1443,102 +1437,73 @@
     // RENDER ORDERS
     // ============================================
 
-    function renderOrders() {
-    const container = document.getElementById('ordersContainer');
-    if (!container) return;
+        function renderOrders() {
+        const container = document.getElementById('ordersContainer');
+        if (!container) return;
 
-    // Keep your existing filtering logic here
-    const filteredOrders = orders.filter(order => {
-        if (currentFilter === 'all') return order.status !== 'completed';
-        if (['whatsapp', 'phone', 'walkin'].includes(currentFilter)) {
-            return order.source === currentFilter && order.status !== 'completed';
+        const filteredOrders = orders.filter(order => {
+            if (currentFilter === 'all') return order.status !== 'completed';
+            if (['whatsapp', 'phone', 'walkin'].includes(currentFilter)) {
+                return order.source === currentFilter && order.status !== 'completed';
+            }
+            return order.status === currentFilter;
+        });
+
+        if (filteredOrders.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🍽️</div>
+                    <div>No orders to display</div>
+                </div>`;
+            return;
         }
-        return order.status === currentFilter;
-    });
 
-    if (filteredOrders.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;">🍽️</div>
-                <div>No orders to display</div>
-            </div>`;
-        return;
-    }
-
-    container.innerHTML = filteredOrders.map(order => `
-        <div class="order-card ${order.status} ${order.source} ${order.locked ? 'locked' : ''}" id="order-${order.id}">
-            
-            ${order.locked ? '<div class="lock-badge">🔒 ANCHORED</div>' : ''}
-            
-            <div class="order-header">
-                <div class="order-number-section">
-                    <div class="order-number">#${order.orderNumber}</div>
-                    <div class="order-source">${getSourceIcon(order.source)} ${order.source.toUpperCase()}</div>
-                </div>
-                <div class="timer-section">
-                    <div class="timer ${getTimerClass(order.timer)}">${formatTimer(order.timer)}</div>
-                    <div class="promise-time">Due: ${formatTime(order.promiseTime)}</div>
-                </div>
-            </div>
-            
-            <div class="customer-info">
-                <div class="customer-name">👤 ${order.customer}</div>
-            </div>
-
-            <div class="order-items">
-                ${order.items.map((item, idx) => `
-                    <div class="order-item">
-                        <div class="item-header">
-                            <div class="item-check ${item.completed ? '' : 'pending'}" 
-                                 onclick="toggleItem(${order.id}, ${idx})">
-                                ${item.completed ? '✓' : ''}
-                            </div>
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-quantity">x${item.quantity}</div>
-                        </div>
+        container.innerHTML = filteredOrders.map(order => `
+            <div class="order-card ${order.status} ${order.source} ${order.locked ? 'locked' : ''}" id="order-${order.id}">
+                
+                ${order.locked ? '<div class="lock-badge">🔒 ANCHORED</div>' : ''}
+                
+                <div class="order-header">
+                    <div class="order-number-section">
+                        <div class="order-number">#${order.orderNumber}</div>
+                        <div class="order-source">${getSourceIcon(order.source)} ${order.source.toUpperCase()}</div>
                     </div>
-                `).join('')}
-            </div>
+                    <div class="timer-section">
+                        <div class="timer ${getTimerClass(order.timer)}">${formatTimer(order.timer)}</div>
+                        <div class="promise-time">Due: ${formatTime(order.promiseTime)}</div>
+                    </div>
+                </div>
 
-            <div class="order-actions">
-                ${order.status === 'new' ? 
-                    `<button class="action-btn btn-start" onclick="updateOrderStatus(${order.id}, 'preparing')">Start</button>` : ''}
-                ${order.status === 'preparing' ? 
-                    `<button class="action-btn btn-ready" onclick="updateOrderStatus(${order.id}, 'ready')">Ready</button>` : ''}
-                ${order.status === 'ready' ? 
-                    `<button class="action-btn btn-complete" onclick="updateOrderStatus(${order.id}, 'completed')">Complete</button>` : ''}
-            </div>
-        </div>
-    `).join('');
-}
+                <div class="customer-info">
+                    <div class="customer-name">👤 ${order.customer}</div>
+                </div>
 
-    function attachButtonListeners() {
-        document.querySelectorAll('.btn-start').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const card = e.target.closest('.order-card');
-                const orderId = card.dataset.orderId;
-                console.log('🟢 Start clicked for order:', orderId);
-                changeStatus(orderId, 'preparing');
-            });
-        });
-    
-        document.querySelectorAll('.btn-ready').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const card = e.target.closest('.order-card');
-                const orderId = card.dataset.orderId;
-                console.log('🟠 Ready clicked for order:', orderId);
-                changeStatus(orderId, 'ready');
-            });
-        });
-    
-        document.querySelectorAll('.btn-complete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const card = e.target.closest('.order-card');
-                const orderId = card.dataset.orderId;
-                console.log('🔵 Complete clicked for order:', orderId);
-                changeStatus(orderId, 'completed');
-            });
-        });
+                <div class="order-items">
+                    ${order.items.map((item, idx) => `
+                        <div class="order-item">
+                            <div class="item-header">
+                                <div class="item-check ${item.completed ? '' : 'pending'}" 
+                                    onclick="toggleItem(${order.id}, ${idx})">
+                                    ${item.completed ? '✓' : ''}
+                                </div>
+                                <div class="item-name">${item.name}</div>
+                                <div class="item-quantity">x${item.quantity}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="order-actions">
+                    ${order.status === 'new' ? 
+                        `<button class="action-btn btn-start" onclick="updateOrderStatus(${order.id}, 'preparing')">Start</button>` : ''}
+                    ${order.status === 'preparing' ? 
+                        `<button class="action-btn btn-ready" onclick="updateOrderStatus(${order.id}, 'ready')">Ready</button>` : ''}
+                    ${order.status === 'ready' ? 
+                        `<button class="action-btn btn-complete" onclick="updateOrderStatus(${order.id}, 'completed')">Complete</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
     
 
         // ADD THIS: Item checkboxes
@@ -1557,7 +1522,7 @@
             'buttons and',
             document.querySelectorAll('.item-check').length,
             'checkboxes');
-    }
+    
     
     
     function applyWeightedQueue(ordersArray) {
