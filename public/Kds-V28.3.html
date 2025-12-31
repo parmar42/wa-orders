@@ -1913,7 +1913,7 @@
                 orderNumber: data.orderNumber
             };
 
-                console.log('🆔 Extracted newOrder ID:', order.id);
+                console.log('🆔 Extracted newOrder ID:', newOrder.id);
 
             const existingIndex = orders.findIndex(o => o.orderNumber === newOrder.orderNumber);
             if (existingIndex === -1) {
@@ -1922,7 +1922,7 @@
                 renderOrders();
                 updateLoadIndicator();
                 console.log('✅ Legacy order added!');
-                console.log('🆔 Extracted order ID', order.id);
+                console.log('🆔 Extracted order ID:', newOrder.id);
             }
             
         } catch (error) {
