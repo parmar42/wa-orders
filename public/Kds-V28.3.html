@@ -1819,7 +1819,9 @@
         console.error('❌ Socket Connection Error:', error.message);
     });
 
+    //===========================================
     // Listen for new orders (Tap+Serve format)
+    //===========================================
     socket.on('new_order', (receivedData) => {
         console.log('🎯 NEW ORDER EVENT:', receivedData);
         
@@ -1867,7 +1869,7 @@
         }
     });  // ← Close new_order handler HERE
 
-    /*  // Listen for legacy format
+        // Listen for legacy format
     socket.on('new-kds-order', (data) => {
         console.log('📥 LEGACY ORDER:', data);
         
@@ -1910,7 +1912,8 @@
             console.error('❌ Legacy order error:', error);
         }
     });  // ← Close new-kds-order handler HERE
-**/
+    
+    /*
     // Listen for order status updates from other KDS displays
     socket.on('order_updated', (updateData) => {
         console.log('📡 Order status update received:', updateData);
@@ -1948,11 +1951,13 @@
         } catch (error) {
             console.error('❌ Error processing status update:', error);
         }
-    });  // ← Close order_updated handler HERE
-
+    });  
+    
+    // ← Close order_updated handler HERE
+    **/
     // ============================================
     // LOGOUT FUNCTION  
-    
+    // ============================================
     function logout() {
         if (confirm('Are you sure you want to logout?')) {
             localStorage.removeItem('kds_auth');
