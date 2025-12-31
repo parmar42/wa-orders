@@ -1834,6 +1834,7 @@
     //===========================================
     // Listen for new orders (Tap+Serve format)
     //===========================================
+    /*
     socket.on('new_order', (receivedData) => {
         console.log('🎯 NEW ORDER EVENT:', receivedData);
         
@@ -1880,7 +1881,7 @@
             console.error('❌ Error processing order:', error);
         }
     });  // ← Close new_order handler HERE
-
+        **/
         // Listen for legacy format
     socket.on('new-kds-order', (data) => {
         console.log('📥 LEGACY ORDER:', data);
@@ -1918,7 +1919,7 @@
                 renderOrders();
                 updateLoadIndicator();
                 console.log('✅ Legacy order added!');
-                console.log('🆔 Extracted: orderId');
+                console.log('🆔 Extracted: newOrder.id');
             }
             
         } catch (error) {
@@ -1926,7 +1927,7 @@
         }
     });  // ← Close new-kds-order handler HERE
     
-    /*
+    
     // Listen for order status updates from other KDS displays
     socket.on('order_updated', (updateData) => {
         console.log('📡 Order status update received:', updateData);
@@ -1967,7 +1968,7 @@
     });  
     
     // ← Close order_updated handler HERE
-    **/
+
     // ============================================
     // LOGOUT FUNCTION  
     // ============================================
