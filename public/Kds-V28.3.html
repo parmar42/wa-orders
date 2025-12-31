@@ -1077,6 +1077,18 @@
     // CONFIGURATION & STATE
     // ============================================
 
+    function handleNewOrderData(data) {
+        console.log('New order data received:', data);
+        // Process the new order data as needed
+        const event = new CustomEvent('orderDataUpdated', {
+            detail: {orderId: data.orderId
+        }       
+     });
+     document.dispatchEvent(event);
+
+    }
+
+
     const CONFIG = {
         APPS_SCRIPT_URL: '',  // Not using
         NODEJS_URL: 'https://wa-orders.onrender.com',
@@ -1465,7 +1477,7 @@
             
             return `
                 <div class="${cardClasses}" data-order-id="${order.id}">
-                    <div class="order-header">
+                     <div class="order-header">
                         <div class="order-number-section">
                             <div class="order-number">
                                 ${order.orderNumber}
@@ -1906,7 +1918,7 @@
                 renderOrders();
                 updateLoadIndicator();
                 console.log('✅ Legacy order added!');
-                console.log('🆔 Extracted', newOrder.id);
+                console.log('🆔 Extracted', neworder.id);
             }
             
         } catch (error) {
@@ -1980,6 +1992,15 @@
     }, 1000);
 
     console.log('🍜 Tap+Serve KDS Initialized');
+
+    document.addEventListener('orderDataUpdated', (event) => {
+        const orderId = event.detail.id;
+        document.getElementById('someButton').disabled = false;
+        
+    });
+
+
+
     </script>
 </body>
 </html>
