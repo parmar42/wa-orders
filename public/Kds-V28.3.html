@@ -1454,6 +1454,7 @@
         }
         
         container.innerHTML = filteredOrders.map(order => {
+            console.log("🖼️ Rendering order:", order.orderNumber, "with id:", order.id);
             const elapsed = order.timer / 60;
             const isOverdue = elapsed > order.promiseTime;
             const progress = (elapsed / order.promiseTime) * 100;
@@ -1911,6 +1912,8 @@
                 timer: 0,
                 orderNumber: data.orderNumber
             };
+
+                console.log('🆔 Extracted newOrder ID', order.id);
 
             const existingIndex = orders.findIndex(o => o.orderNumber === newOrder.orderNumber);
             if (existingIndex === -1) {
