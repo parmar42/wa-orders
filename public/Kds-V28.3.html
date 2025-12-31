@@ -1454,7 +1454,7 @@
         }
         
         container.innerHTML = filteredOrders.map(order => {
-            
+            console.log('🚨✅ Order ID attached!!!!!!:', order.id);  
             const elapsed = order.timer / 60;
             const isOverdue = elapsed > order.promiseTime;
             const progress = (elapsed / order.promiseTime) * 100;
@@ -1922,7 +1922,7 @@
                 renderOrders();
                 updateLoadIndicator();
                 console.log('✅ Legacy order added!');
-               
+                console.log('🆔 Order ID extracted from newOrder.id:', newOrder.id);
             }
             
         } catch (error) {
