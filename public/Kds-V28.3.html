@@ -1475,10 +1475,9 @@
             } else if (order.status === 'ready') {
                 actionButtons = `<button class="action-btn btn-complete">Complete</button>`;
             }
-            
+            console.log("🖼️ Rendering order:", order.orderNumber, "with id:", order.id);
             return `
                 <div class="${cardClasses}" data-order-id="${order.id}">
-                    console.log("🖼️ Rendering order:", order.orderNumber, "with id:", order.id);
                      <div class="order-header">
                         <div class="order-number-section">
                             <div class="order-number">
@@ -1501,12 +1500,13 @@
                     </div>
                     
                     <div class="order-items">
-                        ${order.items.map((item, idx) => `
+                        ${order.items.map((item, idx) =>
+                        console.log("⚠️ Oder ID attached!!!!!:", order.orderNumber, "with id:", order.id);
+                        `
                             <div class="order-item">
                                 <div class="item-header">
                                    <div class="item-check ${item.completed ? '' : 'pending'}" 
                                     data-order-id="${order.id}" 
-                                    console.log("⚠️ Order Id attached!!!!!:", order.orderNumber, "with id:", order.id);
                                     data-item-index="${idx}">
                                     ${item.completed ? '✓' : '○'}
                                     </div>
