@@ -1475,7 +1475,7 @@
             } else if (order.status === 'ready') {
                 actionButtons = `<button class="action-btn btn-complete">Complete</button>`;
             }
-            console.log("🖼️ Rendering order:", order.orderNumber, "with id:", order.id);
+            
             return `
                 <div class="${cardClasses}" data-order-id="${order.id}">
                      <div class="order-header">
