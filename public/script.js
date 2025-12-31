@@ -3,9 +3,9 @@
 // ============================================
 const NODEJS_URL = '/api/orders';
 //const NODEJS_URL = '/submit-order';
-const CHAT_NUMBER = process.env.CHAT_NUMBER;
-const chatNumber = CHAT_NUMBER
-//const chatNumber = '12462367556'; // Your business WhatsApp number
+//const CHAT_NUMBER = process.env.CHAT_NUMBER;
+//const chatNumber = CHAT_NUMBER
+const chatNumber = '12462367556'; // Your business WhatsApp number
 let orderItems = [];
 
 // Extract the 'wa_number' from the URL globally so all functions can see it
