@@ -960,8 +960,8 @@
                             <span>Card Width</span>
                             <select id="card-width" onchange="updateCardWidth()">
                                 <option value="240">Small (240px)</option>
-                                <option value="280" selected>Medium (280px)</option>
-                                <option value="320">Large (320px)</option>
+                                <option value="280">Medium (280px)</option>
+                                <option value="320" selected>Large (320px)</option>
                                 <option value="360">X-Large (360px)</option>
                             </select>
                         </div>
@@ -1240,15 +1240,11 @@
     }
 
     function updateTimers() {
-    orders.forEach(order => {
-        order.timer++;
-        const timerEl = document.querySelector(`#order-${order.id} .timer`);
-        if (timerEl) {
-        timerEl.textContent = formatTimer(order.timer);
-        }
-    });
-    }
-    setInterval(updateTimers, 1000);
+        const now = Date.now();
+        let needsFullRender = false;
+        
+        orders.forEach(order => {
+            order.timer = Math.floor((now - order.startTime) / 1000);
             
             if (settings.anchoring && !order.locked && order.source !== 'walkin') {
                 const elapsed = order.timer / 60;
@@ -1266,7 +1262,7 @@
                 playSound('overdue');
                 needsFullRender = true;  // Overdue status changed - need full render
             }
-      
+        });
         
         // Only full re-render if lock or overdue status changed
         if (needsFullRender) {
@@ -1275,7 +1271,7 @@
             // Just update timer displays without re-rendering
             updateTimerDisplays();
         }
-    
+    }
 
     // NEW FUNCTION: Update only timer elements
     function updateTimerDisplays() {
