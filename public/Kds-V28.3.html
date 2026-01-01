@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tap+serve KDS - Advanced Kitchen Display</title>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         * {
             margin: 0;
@@ -52,7 +52,7 @@
             transition: all 0.2s;
             font-size: 13px;
             font-weight: 600;
-            display: flex;
+            display: flex-start;
             align-items: center;
             gap: 6px;
         }
@@ -699,28 +699,29 @@
         <div class="time-display" id="currentTime">10:00 AM</div>
         <div class="header-actions">
             <button class="icon-btn" onclick="logout()" title="Logout">
-                🚪 Logout
+            <i class="fa-solid fa-arrow-right-from-bracket" style="color: #ffffff;"></i> 
+            Logout
             </button>
             <button class="icon-btn" onclick="clearAllOrders()" title="Clear All">
-                🗑️ Clear
+            <i class="fa-regular fa-trash-can" style="color: #ffffff;"></i>Clear
             </button>
             <button class="icon-btn" onclick="refreshOrders()" title="Refresh">
-                🔄 Refresh
+            <i class="fa-solid fa-rotate-right" style="color: #ffffff;"></i>Refresh
             </button>
             <button class="icon-btn" onclick="showSearch()" title="Search">
-                🔍 Search
+            <i class="fa-solid fa-magnifying-glass" style="color: #ffffff;"></i>Search
             </button>
             <button class="icon-btn" onclick="showHistory()" title="History">
-                📊 History
+            <i class="fa-regular fa-clipboard" style="color: #ffffff;"></i></i>History
             </button>
             <button class="icon-btn" onclick="addTestOrder()" title="Test Order">
-                ➕ Test
+            <i class="fa-solid fa-plus" style="color: #ffffff;"></i></i>Test
             </button>
             <button class="icon-btn" onclick="resetSettings()" title="Reset">
-                ↺ Reset
+            <i class="fa-solid fa-arrow-rotate-left" style="color: #ffffff;"></i>Reset
             </button>
             <button class="icon-btn" onclick="showSettings()" title="Settings">
-                ⚙️ Settings
+            <i class="fa-solid fa-gear" style="color: #ffffff;"></i>Settings
             </button>
             <div class="logo">
                 <div id="connection-status" 
