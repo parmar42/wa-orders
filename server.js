@@ -241,7 +241,7 @@ app.get('/health', (req, res) => {
                 `https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, 
                 {
                     messaging_product: "whatsapp",
-                    to: phoneNumber,
+                    to: orderData.phoneNumber,
                     type: "text",
                     text: { body: whatsappUpdate }
                 }, 
