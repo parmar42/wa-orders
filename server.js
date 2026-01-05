@@ -307,7 +307,7 @@ function getStatusMessage(status, orderNumber) {
         'ready': 
             `🎉 *Order Ready for Pickup!* #${orderNumber}\n\n` +
             `Your order is ready!\n\n` +
-            // `📍 ABC EATS Restaurant\n` +
+            `📍 ABC EATS Restaurant\n` +
             `⏰ Please collect within 15 minutes\n\n` +
             `See you soon!`,
         
