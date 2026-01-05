@@ -307,7 +307,7 @@ function getStatusMessage(status, orderNumber) {
         'ready': 
             `🎉 *Order Ready for Pickup!* #${orderNumber}\n\n` +
             `Your order is ready!\n\n` +
-            `📍 East Moon Restaurant\n` +
+            // `📍 ABC EATS Restaurant\n` +
             `⏰ Please collect within 15 minutes\n\n` +
             `See you soon!`,
         
@@ -318,7 +318,7 @@ function getStatusMessage(status, orderNumber) {
         
         'completed': 
             `✅ *Order Completed* #${orderNumber}\n\n` +
-            `Thank you for choosing East Moon! 🙏\n\n` +
+            `Thank you for choosing ABC EATS! 🙏\n\n` +
             `We hope you enjoyed your meal.\n` +
             `See you again soon!`,
         
