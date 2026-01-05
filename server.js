@@ -169,6 +169,41 @@ app.get('/health', (req, res) => {
     }
 });
 **/
+
+async function sendWhatsAppMessage(recipientPhone, message) {
+    try {
+        // Format phone number (remove any spaces or special chars)
+        const formattedPhone = recipientPhone.replace(/[^0-9]/g, '');
+        
+        // Meta WhatsApp Business API format
+        const response = await axios.post(
+            `https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`,
+            {
+                messaging_product: 'whatsapp',
+                to: formattedPhone,
+                type: 'text',
+                text: {
+                    body: message
+                }
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        console.log(`✅ WhatsApp sent to ${formattedPhone}`);
+        return { success: true, messageId: response.data.messages[0].id };
+        
+    } catch (error) {
+        console.error('❌ WhatsApp send failed:', error.response?.data || error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+
 // ============================================
 // NEW ENDPOINT - NODE.JS / SUPABASE
 // ============================================
@@ -237,18 +272,7 @@ app.get('/health', (req, res) => {
 
         // Send WhatsApp (if configured)
         if (process.env.META_PHONE_ID && process.env.META_ACCESS_TOKEN) {
-            await axios.post(
-                `https://graph.facebook.com/v24.0/${process.env.META_PHONE_ID}/messages`, 
-                {
-                    messaging_product: "whatsapp",
-                    to: orderData.phoneNumber,
-                    type: "text",
-                    text: { body: whatsappUpdate }
-                }, 
-                {
-                    headers: { 'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}` }
-                }
-            ).catch(err => console.error('WhatsApp error:', err.message));
+            await sendWhatsAppMessage(orderData.phoneNumber, whatsappUpdate);
         }
 
         res.json({ success: true, orderNumber });
@@ -262,6 +286,105 @@ app.get('/health', (req, res) => {
         });
     }
 });
+
+
+function getStatusMessage(status, orderNumber) {
+    const messages = {
+        'new': 
+            `📝 *Order Received* #${orderNumber}\n\n` +
+            `We've received your order!`,
+        
+        'confirmed': 
+            `✅ *Order Confirmed* #${orderNumber}\n\n` +
+            `Your order has been confirmed and sent to the kitchen!\n\n` +
+            `We'll notify you when it's ready.`,
+        
+        'preparing': 
+            `👨‍🍳 *Preparing Your Order* #${orderNumber}\n\n` +
+            `Our chefs are cooking your meal right now!\n\n` +
+            `Estimated time: 15-20 minutes`,
+        
+        'ready': 
+            `🎉 *Order Ready for Pickup!* #${orderNumber}\n\n` +
+            `Your order is ready!\n\n` +
+            `📍 East Moon Restaurant\n` +
+            `⏰ Please collect within 15 minutes\n\n` +
+            `See you soon!`,
+        
+        'out_for_delivery': 
+            `🚗 *Out for Delivery* #${orderNumber}\n\n` +
+            `Your order is on the way!\n\n` +
+            `Estimated arrival: 20-30 minutes`,
+        
+        'completed': 
+            `✅ *Order Completed* #${orderNumber}\n\n` +
+            `Thank you for choosing East Moon! 🙏\n\n` +
+            `We hope you enjoyed your meal.\n` +
+            `See you again soon!`,
+        
+        'cancelled': 
+            `❌ *Order Cancelled* #${orderNumber}\n\n` +
+            `Your order has been cancelled.\n\n` +
+            `If you have questions, please call us.`
+    };
+    
+    return messages[status] || `Order #${orderNumber} status: ${status}`;
+}
+
+// ============================================
+// Supabase status listener
+// ============================================
+
+if (supabase) {
+    console.log('📡 Setting up order status listener...');
+    
+    supabase
+        .channel('order_status_updates')
+        .on(
+            'postgres_changes',
+            {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'orders'
+            },
+            async (payload) => {
+                const order = payload.new;
+                const oldOrder = payload.old;
+                
+                // Only send if status actually changed
+                if (order.status !== oldOrder.status) {
+                    console.log(`📦 Order ${order.order_number} status: ${oldOrder.status} → ${order.status}`);
+                    
+                    const customerPhone = order.phone_number;
+                    const orderNumber = order.order_number;
+                    const newStatus = order.status;
+                    
+                    // Get WhatsApp message for this status
+                    const statusMessage = getStatusMessage(newStatus, orderNumber);
+                    
+                    // Send WhatsApp notification
+                    if (process.env.META_PHONE_ID && process.env.META_ACCESS_TOKEN) {
+                        await sendWhatsAppMessage(customerPhone, statusMessage);
+                    }
+                    
+                    // Also broadcast to KDS for real-time updates
+                    io.emit('order_status_update', {
+                        id: order.id,
+                        orderNumber: orderNumber,
+                        status: newStatus,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            }
+        )
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('✅ Order status listener active');
+            } else if (status === 'CHANNEL_ERROR') {
+                console.error('❌ Failed to subscribe to order updates');
+            }
+        });
+}
 
 // ============================================
 // GET ORDERS
