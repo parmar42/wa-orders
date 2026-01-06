@@ -1,0 +1,1019 @@
+<!-- 
+  CUSTOMER ORDER FORM - DATABASE VERSION
+  
+  SETUP INSTRUCTIONS:
+  1. Update RESTAURANT_ID on line 665 with your client's restaurant ID
+  2. Menu loads automatically from database
+  3. Out-of-stock items are hidden automatically
+  4. Server calculates all prices (secure!)
+  
+  Perfect for multi-tenant SaaS - one form for all clients!
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Order Online</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+      min-height: 100vh;
+      padding: 0;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      font-size: 14px;
+      opacity: 0.95;
+    }
+    
+    .form-content {
+      padding: 15px;
+      padding-bottom: 80px;
+    }
+    
+    .form-section {
+      margin-bottom: 25px;
+    }
+    
+    .section-title {
+      color: #8B0000;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #DC143C;
+      padding-bottom: 8px;
+    }
+    
+    .form-group {
+      margin-bottom: 18px;
+    }
+    
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    
+    input[type="text"],
+    input[type="tel"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #DC143C;
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    select {
+      appearance: none;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E") no-repeat right 12px center;
+      padding-right: 35px;
+      cursor: pointer;
+    }
+    
+    .required {
+      color: #DC143C;
+    }
+    
+    .category-header {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      margin: 15px 0 10px 0;
+      border-left: 4px solid #DC143C;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    
+    .category-header:active {
+      background: #e9ecef;
+    }
+    
+    .category-header .arrow {
+      transition: transform 0.3s;
+      font-size: 20px;
+    }
+    
+    .category-header.active .arrow {
+      transform: rotate(180deg);
+    }
+    
+    .menu-items {
+      display: none;
+      margin-bottom: 15px;
+    }
+    
+    .menu-items.show {
+      display: block;
+    }
+    
+    .menu-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: white;
+    }
+    
+    .menu-item:active {
+      transform: scale(0.98);
+    }
+    
+    .menu-item.selected {
+      border-color: #DC143C;
+      background-color: #ffe6e6;
+    }
+    
+    .item-checkbox {
+      margin-right: 12px;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .item-info {
+      flex: 1;
+    }
+    
+    .item-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 15px;
+      margin-bottom: 3px;
+    }
+    
+    .item-description {
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+      line-height: 1.4;
+    }
+    
+    .item-price {
+      color: #DC143C;
+      font-weight: bold;
+      font-size: 16px;
+      margin-left: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    
+    .quantity-control {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+    
+    .menu-item.selected .quantity-control {
+      display: flex;
+    }
+    
+    .qty-btn {
+      width: 35px;
+      height: 35px;
+      border: 2px solid #DC143C;
+      background: white;
+      color: #DC143C;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .qty-btn:active {
+      background: #DC143C;
+      color: white;
+      transform: scale(0.9);
+    }
+    
+    .qty-display {
+      min-width: 30px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    .order-summary {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px solid #e0e0e0;
+    }
+    
+    .order-summary h4 {
+      color: #8B0000;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+    
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #dee2e6;
+      font-size: 14px;
+    }
+    
+    .summary-subtotal {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0 8px 0;
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+      border-top: 2px solid #dee2e6;
+      margin-top: 8px;
+    }
+    
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 0 5px 0;
+      font-weight: 700;
+      font-size: 20px;
+      color: #8B0000;
+      border-top: 3px solid #DC143C;
+      margin-top: 8px;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 15px;
+    }
+    
+    .message.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #DC143C;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .success-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%; 
+      height: 100dvh; 
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      align-items: flex-start; 
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+      backdrop-filter: blur(5px);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .success-modal.show {
+      display: flex;
+    }
+    
+    .success-modal-content {
+      background: white;
+      border-radius: 15px;
+      padding: 30px 20px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      margin-top: auto;
+      margin-bottom: auto;
+      position: relative;
+      animation: slideUp 0.4s ease-out;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .success-checkmark {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #28a745;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 50px;
+      color: white;
+      animation: scaleIn 0.5s ease-out;
+    }
+    
+    @keyframes scaleIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    .success-modal h2 {
+      color: #28a745;
+      margin-bottom: 15px;
+      font-size: 28px;
+    }
+    
+    .success-modal .order-number {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #DC143C;
+    }
+    
+    .success-modal .order-number span {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .success-modal .order-number strong {
+      color: #8B0000;
+      font-size: 24px;
+      display: block;
+      margin-top: 5px;
+      letter-spacing: 1px;
+    }
+    
+    .success-modal .info-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+      color: #856404;
+      text-align: left;
+    }
+    
+    .success-modal .info-box strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+    
+    .success-modal p {
+      color: #666;
+      line-height: 1.6;
+      margin: 15px 0;
+    }
+    
+    .countdown-box {
+      margin: 30px 0;
+      padding: 20px;
+      background: #e3f2fd;
+      border-radius: 10px;
+      border-left: 4px solid #2196F3;
+    }
+    
+    .countdown-box p {
+      color: #1976d2;
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .countdown-number {
+      font-size: 48px;
+      font-weight: bold;
+      color: #DC143C;
+      display: block;
+      margin: 10px 0;
+    }
+    
+    @media (min-width: 600px) {
+      .header h1 {
+        font-size: 32px;
+      }
+      
+      .container {
+        margin: 20px auto;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        min-height: auto;
+      }
+      
+      .header {
+        border-radius: 15px 15px 0 0;
+      }
+      
+      body {
+        padding: 20px;
+      }
+      
+      .form-content {
+        padding: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 id="restaurantName">🥡 Loading...</h1>
+      <p>Place Your Order - Cash Only</p>
+    </div>
+    
+    <div class="form-content">
+      <div id="message" class="message"></div>
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading menu...</p>
+      </div>
+      
+      <form id="orderForm">
+        <div class="form-section">
+          <div class="section-title">📋 Your Information</div>
+          
+          <div class="form-group">
+            <label for="customerName">Full Name <span class="required">*</span></label>
+            <input type="text" id="customerName" name="customerName" required placeholder="John Doe">
+          </div>
+          
+          <div class="form-group">
+            <label for="userInput">Phone Number <span class="required">*</span></label>
+            <input type="tel" id="userInput" name="userInput" required placeholder="246-XXX-XXXX">
+          </div>
+          
+          <div class="form-group">
+            <label for="deliveryAddress">Delivery Address <span class="required">*</span></label>
+            <textarea id="deliveryAddress" name="deliveryAddress" required placeholder="Street, parish, landmarks"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="orderType">Order Type <span class="required">*</span></label>
+            <select id="orderType" name="orderType" required>
+              <option value="">-- Select --</option>
+              <option value="Delivery">🚗 Delivery</option>
+              <option value="Takeout">🥡 Takeout</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-section" id="menuSection">
+          <div class="section-title">🍜 Select Your Dishes</div>
+          <!-- Menu categories and items will be loaded here -->
+        </div>
+        
+        <div class="order-summary" id="orderSummary" style="display:none;">
+          <h4>📋 Your Order</h4>
+          <div id="summaryItems"></div>
+          <div id="summaryCalculations"></div>
+        </div>
+        
+        <div class="form-section">
+          <div class="section-title">📝 Special Instructions</div>
+          <div class="form-group">
+            <textarea id="specialInstructions" name="specialInstructions" placeholder="Optional - any special requests or dietary restrictions"></textarea>
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-btn" id="submitBtn" disabled>Submit Order</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="successModal" class="success-modal">
+    <div class="success-modal-content">
+      <div class="success-checkmark">✓</div>
+      <h2>Order Confirmed! 🎉</h2>
+      
+      <div class="order-number">
+        <span>Your Order Number:</span>
+        <strong id="modalOrderNumber">#UD0000</strong>
+      </div>
+      
+      <p>
+        Thank you for your order! We've received it and you'll receive a WhatsApp confirmation shortly.
+      </p>
+      
+      <div class="info-box">
+        <strong>📱 Check Your WhatsApp!</strong>
+        You'll receive your order confirmation via WhatsApp in a few moments.
+      </div>
+      
+      <p style="font-size: 14px; margin-top: 15px;">
+        <strong>Payment:</strong> Cash only on delivery or pickup.
+      </p>
+      
+      <div class="countdown-box">
+        <p>Redirecting to WhatsApp in</p>
+        <span id="redirectCountdown" class="countdown-number">5</span>
+      </div>
+      
+      <p style="font-size: 13px; color: #999; text-align: center; margin-top: 10px;">
+        Please wait while we open WhatsApp...
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // CONFIGURATION - UPDATE THIS FOR EACH CLIENT
+    // ============================================
+    const RESTAURANT_ID = '0fa03a81-6d4c-4d97-9e49-af73ddcbb449'; // Ultra Dine demo
+    const API_BASE = window.location.origin; // Your server URL
+    
+    // ============================================
+    // STATE
+    // ============================================
+    let menuData = [];
+    let selectedItems = new Map();
+    let restaurantInfo = null;
+    
+    // ============================================
+    // LOAD RESTAURANT INFO
+    // ============================================
+    async function loadRestaurantInfo() {
+        try {
+            // You could also load by slug if you prefer
+            const response = await fetch(`${API_BASE}/api/restaurants/ultra-dine`);
+            const data = await response.json();
+            
+            if (data.success) {
+                restaurantInfo = data.restaurant;
+                document.getElementById('restaurantName').textContent = `🥡 ${restaurantInfo.name}`;
+            }
+        } catch (error) {
+            console.error('Load restaurant info error:', error);
+        }
+    }
+    
+    // ============================================
+    // LOAD MENU FROM DATABASE
+    // ============================================
+    async function loadMenu() {
+        document.getElementById('loading').style.display = 'block';
+        
+        try {
+            const response = await fetch(`${API_BASE}/api/restaurants/${RESTAURANT_ID}/menu?available_only=true`);
+            const data = await response.json();
+            
+            if (data.success) {
+                menuData = data.menu;
+                renderMenu();
+            } else {
+                showError('Failed to load menu. Please refresh the page.');
+            }
+        } catch (error) {
+            console.error('Load menu error:', error);
+            showError('Failed to load menu. Please check your connection.');
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+    
+    // ============================================
+    // RENDER MENU DYNAMICALLY
+    // ============================================
+    function renderMenu() {
+        const menuSection = document.getElementById('menuSection');
+        
+        // Clear existing menu content (keep title)
+        const existingCategories = menuSection.querySelectorAll('.category-header, .menu-items');
+        existingCategories.forEach(el => el.remove());
+        
+        // Render each category
+        menuData.forEach((category) => {
+            if (category.items.length === 0) return;
+            
+            // Create category header
+            const categoryHeader = document.createElement('div');
+            categoryHeader.className = 'category-header';
+            categoryHeader.dataset.target = `category-${category.id}`;
+            categoryHeader.innerHTML = `
+                <span>${getCategoryEmoji(category.name)} ${category.name.toUpperCase()}</span>
+                <span class="arrow">▼</span>
+            `;
+            
+            // Create items container
+            const itemsContainer = document.createElement('div');
+            itemsContainer.id = `category-${category.id}`;
+            itemsContainer.className = 'menu-items';
+            
+            // Add items
+            category.items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                itemDiv.dataset.itemId = item.id;
+                itemDiv.dataset.item = item.name;
+                itemDiv.dataset.price = item.price;
+                
+                itemDiv.innerHTML = `
+                    <input type="checkbox" class="item-checkbox">
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        ${item.description ? `<div class="item-description">${item.description}</div>` : ''}
+                    </div>
+                    <span class="item-price">$${parseFloat(item.price).toFixed(2)}</span>
+                    <div class="quantity-control">
+                        <button type="button" class="qty-btn qty-minus">-</button>
+                        <span class="qty-display">1</span>
+                        <button type="button" class="qty-btn qty-plus">+</button>
+                    </div>
+                `;
+                
+                itemsContainer.appendChild(itemDiv);
+            });
+            
+            menuSection.appendChild(categoryHeader);
+            menuSection.appendChild(itemsContainer);
+        });
+        
+        // Initialize event listeners
+        initializeMenuInteractions();
+    }
+    
+    // ============================================
+    // CATEGORY EMOJI HELPER
+    // ============================================
+    function getCategoryEmoji(categoryName) {
+        const emojis = {
+            'Signature Burgers': '🍔',
+            'Appetizers': '🥟',
+            'Appetizers & Starters': '🌮',
+            'Fresh Salads': '🥗',
+            'Sandwiches & Wraps': '🥪',
+            'Sides': '🍟',
+            'Desserts': '🍰',
+            'Beverages': '🥤',
+            'Fried Rice': '🍚',
+            'Chow Mein': '🍜',
+            'Sweet & Sour': '🍯',
+            'Cantonese Specialties': '⭐'
+        };
+        
+        for (let key in emojis) {
+            if (categoryName.toLowerCase().includes(key.toLowerCase())) {
+                return emojis[key];
+            }
+        }
+        
+        return '🍽️';
+    }
+    
+    // ============================================
+    // INITIALIZE MENU INTERACTIONS
+    // ============================================
+    function initializeMenuInteractions() {
+        // Category toggles
+        document.querySelectorAll('.category-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const targetId = this.dataset.target;
+                const itemsContainer = document.getElementById(targetId);
+                
+                if (itemsContainer) {
+                    itemsContainer.classList.toggle('show');
+                    this.classList.toggle('active');
+                }
+            });
+        });
+        
+        // Menu item selection
+        document.querySelectorAll('.menu-item').forEach(item => {
+            const checkbox = item.querySelector('.item-checkbox');
+            
+            item.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('qty-btn')) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            checkbox.addEventListener('change', function(e) {
+                e.stopPropagation();
+                const menuItem = this.closest('.menu-item');
+                
+                if (this.checked) {
+                    menuItem.classList.add('selected');
+                    const itemId = menuItem.dataset.itemId;
+                    const itemName = menuItem.dataset.item;
+                    const itemPrice = parseFloat(menuItem.dataset.price);
+                    
+                    selectedItems.set(itemId, {
+                        id: itemId,
+                        name: itemName,
+                        price: itemPrice,
+                        quantity: 1
+                    });
+                } else {
+                    menuItem.classList.remove('selected');
+                    selectedItems.delete(menuItem.dataset.itemId);
+                }
+                
+                updateOrderSummary();
+            });
+        });
+        
+        // Quantity controls
+        document.querySelectorAll('.qty-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menuItem = this.closest('.menu-item');
+                const itemId = menuItem.dataset.itemId;
+                const qtyDisplay = menuItem.querySelector('.qty-display');
+                let currentQty = parseInt(qtyDisplay.textContent);
+                
+                if (this.classList.contains('qty-plus')) {
+                    currentQty++;
+                } else if (this.classList.contains('qty-minus')) {
+                    currentQty = Math.max(1, currentQty - 1);
+                }
+                
+                qtyDisplay.textContent = currentQty;
+                
+                if (selectedItems.has(itemId)) {
+                    selectedItems.get(itemId).quantity = currentQty;
+                    updateOrderSummary();
+                }
+            });
+        });
+    }
+    
+    // ============================================
+    // UPDATE ORDER SUMMARY
+    // ============================================
+    function updateOrderSummary() {
+        const summary = document.getElementById('orderSummary');
+        const summaryItems = document.getElementById('summaryItems');
+        const summaryCalc = document.getElementById('summaryCalculations');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (selectedItems.size === 0) {
+            summary.style.display = 'none';
+            submitBtn.disabled = true;
+            return;
+        }
+        
+        summary.style.display = 'block';
+        submitBtn.disabled = false;
+        
+        // Render items
+        let itemsHTML = '';
+        let subtotal = 0;
+        
+        selectedItems.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+            
+            itemsHTML += `
+                <div class="summary-item">
+                    <span>${item.name} x${item.quantity}</span>
+                    <span>$${itemTotal.toFixed(2)}</span>
+                </div>
+            `;
+        });
+        
+        summaryItems.innerHTML = itemsHTML;
+        
+        // Note: Server will recalculate actual total with tax
+        summaryCalc.innerHTML = `
+            <div class="summary-total">
+                <span>Estimated Total:</span>
+                <span>$${subtotal.toFixed(2)}</span>
+            </div>
+            <p style="font-size: 12px; color: #666; margin-top: 8px; text-align: center;">
+                * Final total will be calculated including tax
+            </p>
+        `;
+    }
+    
+    // ============================================
+    // FORM SUBMISSION
+    // ============================================
+    document.getElementById('orderForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const customerName = document.getElementById('customerName').value.trim();
+        const phoneNumber = document.getElementById('userInput').value.trim();
+        const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+        const orderType = document.getElementById('orderType').value;
+        const notes = document.getElementById('specialInstructions').value.trim();
+        
+        if (selectedItems.size === 0) {
+            showError('Please select at least one item');
+            return;
+        }
+        
+        if (!customerName || !phoneNumber || !deliveryAddress || !orderType) {
+            showError('Please fill in all required fields');
+            return;
+        }
+        
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('submitBtn').disabled = true;
+        
+        const items = Array.from(selectedItems.values());
+        
+        try {
+            const response = await fetch(`${API_BASE}/api/restaurants/${RESTAURANT_ID}/orders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_name: customerName,
+                    phone_number: phoneNumber,
+                    order_type: orderType,
+                    items: items,
+                    notes: `Delivery: ${deliveryAddress} | ${notes || 'No special instructions'}`
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showSuccess(data.order.order_number, phoneNumber);
+            } else {
+                showError(data.error || 'Failed to place order. Please try again.');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        } catch (error) {
+            console.error('Order error:', error);
+            showError('Failed to place order. Please check your connection.');
+            document.getElementById('submitBtn').disabled = false;
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    });
+    
+    // ============================================
+    // SUCCESS MODAL
+    // ============================================
+    function showSuccess(orderNumber, phoneNumber) {
+        document.getElementById('modalOrderNumber').textContent = orderNumber;
+        document.getElementById('successModal').classList.add('show');
+        
+        let countdown = 5;
+        const countdownEl = document.getElementById('redirectCountdown');
+        const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+        
+        const interval = setInterval(() => {
+            countdown--;
+            countdownEl.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(interval);
+                window.location.href = `https://wa.me/${cleanPhone}`;
+            }
+        }, 1000);
+    }
+    
+    // ============================================
+    // ERROR HANDLING
+    // ============================================
+    function showError(message) {
+        const messageDiv = document.getElementById('message');
+        messageDiv.className = 'message error';
+        messageDiv.textContent = message;
+        messageDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 5000);
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // ============================================
+    // ORDER TYPE CHANGE
+    // ============================================
+    document.getElementById('orderType').addEventListener('change', updateOrderSummary);
+    
+    // ============================================
+    // INITIALIZE ON PAGE LOAD
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRestaurantInfo();
+        loadMenu();
+    });
+  </script>
+</body>
+</html>
