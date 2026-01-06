@@ -786,7 +786,7 @@
     // ============================================
     function initializeMenuInteractions() {
         // Category toggles
-        document.querySelectorAll('.category-header').forEach(header => {
+        document.querySelectorAll('.category-header').forEach((header, index) => {
             header.addEventListener('click', function() {
                 const targetId = this.dataset.target;
                 const itemsContainer = document.getElementById(targetId);
@@ -796,6 +796,16 @@
                     this.classList.toggle('active');
                 }
             });
+            
+            // Expand first category by default
+            if (index === 0) {
+                const targetId = header.dataset.target;
+                const itemsContainer = document.getElementById(targetId);
+                if (itemsContainer) {
+                    itemsContainer.classList.add('show');
+                    header.classList.add('active');
+                }
+            }
         });
         
         // Menu item selection
@@ -1017,3 +1027,4 @@
   </script>
 </body>
 </html>
+
